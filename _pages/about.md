@@ -1,7 +1,8 @@
 ---
 layout: about
-title: 
-permalink: /
+title: about
+permalink: /about/
+nav: false
 subtitle: A Byte-Sized Look at the World of AI
 
 profile:

@@ -119,9 +119,11 @@ bing_site_verification:  # out your bing-site-verification ID (Bing Webmaster)
 # -----------------------------------------------------------------------------
 
 blog_name: Ben's Bytes # blog_name will be displayed in your blog page
-blog_nav_title: blogs # your blog must have a title for it to be displayed in the nav bar
-blog_description: A diary on the progress towards AGIs
-permalink: /blog/:year/:title/
+blog_nav_title: # your blog must have a title for it to be displayed in the nav bar
+blog_description:  A Byte-Sized Look at the World of AI
+permalink: //:year-:month/:title/
+# it used to be /blog/:year/:title
+# blog_nav_title = blank -- mapping it to root
 
 # Pagination
 pagination:
@@ -131,8 +133,8 @@ pagination:
 # Follow instructions on https://giscus.app/ to setup for your repo to fill out
 # the information below.
 giscus:
-  repo: alshedivat/al-folio      # <your-github-user-name>/<your-github-repo-name>
-  repo_id: MDEwOlJlcG9zaXRvcnk2MDAyNDM2NQ==
+  repo: benathi/blogs      # <your-github-user-name>/<your-github-repo-name>
+  repo_id: MDEwOlJlcG9zaXRvcnk2MDAyNDM2NQ== # how to get this?
   category: Comments             # name of the category under which discussions will be created
   category_id: DIC_kwDOA5PmLc4CTBt6
   mapping: title                 # identify discussions by post title
