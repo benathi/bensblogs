@@ -7,6 +7,23 @@
     <meta http-equiv="refresh" content="3; url={{ site.baseurl }}/" />
   {%- endif -%}
   {% include head.html %}
+
+    <style>
+      .arlo_tm_hero {
+        position: relative;
+      }
+      .header-bar {
+        position: absolute;
+        border-bottom: 0px solid var(--global-divider-color);
+        width: 100%;
+        max-width: 100%;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+      }
+    </style>
+
   </head>
 
   <!-- Body -->
@@ -32,5 +49,15 @@
     {% include scripts/mathjax.html %}
     {% include scripts/analytics.html %}
     {% include scripts/progressBar.html %}
+
+  <script src="js/jquery.js"></script>
+  <script src="js/plugins.js"></script>
+  <script src="js/init.js"></script>
+  <script>
+    $(window).on("load", function () {
+      $(".preloader").fadeOut(1000);
+    });
+  </script>
   </body>
+
 </html>
