@@ -5,6 +5,13 @@
       <nav id="navbar" class="navbar navbar-light navbar-expand-sm {% if site.navbar_fixed %}fixed-top{% else %}sticky-top{% endif %}">
         <div class="container">
           {% if page.permalink != '/' -%}
+          <!--
+          Insert link back to main page here
+          -->
+          <a class="navbar-brand title font-weight-lighter" href="https://benathi.github.io/" target="_self">
+              Home
+          </a>
+
           <a class="navbar-brand title font-weight-lighter" href="{{ site.baseurl }}/">
             {%- if site.title == "blank" -%}
               {%- if site.first_name -%}
@@ -20,6 +27,7 @@
               {{- site.title -}}
             {%- endif -%}
           </a>
+
           {%- elsif site.enable_navbar_social -%}
           <!-- Social Icons -->
           <div class="navbar-brand social">
