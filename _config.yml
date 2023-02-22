@@ -190,6 +190,17 @@ kramdown:
     block:
       line_numbers: false
       start_line: 1
+  math_engine: mathjax
+  #math_engine_config:
+  #  tex:
+  #    inlineMath: [ [ '$', '$' ] ]
+  #mathjax:
+  #  options:
+  #    renderActions:
+  #      addMenu:
+  #        - MathMenu
+  #    tex:
+  #      inlineMath: [ [ '$', '$' ] ]
 
 # Includes & excludes
 include: ['_pages']
