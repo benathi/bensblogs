@@ -3,7 +3,16 @@
   <script type="text/javascript">
     window.MathJax = {
       tex: {
-        tags: 'ams'
+        tags: 'ams',
+        <!-- inlineMath: [['$$', '$$']],
+        displayMath: [['$$', '$$']], -->
+        "HTML-CSS": {
+          styles: {
+            ".MathJax_Display": {
+              "font-size": "80%"
+            }
+          }
+        }
       }
     };
   </script>
