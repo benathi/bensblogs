@@ -1,6 +1,6 @@
 ---
 layout: distill
-title: Tensor Parallel Inference
+title: Tensor Parallelism
 date:   2022-11-17
 description:  
 tags: llm attention transformers gpt
@@ -70,6 +70,7 @@ _styles: >
 {% include figure.html
   path="assets/img/blogs/tensor-parallel.svg"
   class="img-fluid rounded z-depth-1"
+  padding="10px"
 %}
 </div>
 
@@ -79,6 +80,7 @@ _styles: >
 {% include figure.html
   path="assets/img/blogs/attention-with-tp.svg"
   class="img-fluid rounded z-depth-1"
+  padding="10px"
 %}
 </div>
 
@@ -93,5 +95,6 @@ _styles: >
 {% include figure.html
   path="assets/img/blogs/feedforward-tp.svg"
   class="img-fluid rounded z-depth-1"
+  padding="10px"
 %}
 </div>

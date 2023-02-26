@@ -116,6 +116,7 @@ We describe the attention in two stages. Given inputs with batch size b and m to
 {% include figure.html
   path="assets/img/blogs/attention_refined.svg"
   class="img-fluid rounded z-depth-1"
+  padding="10px"
 %}
 </div>
 
