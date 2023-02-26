@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: Ben's Bytes # the website title (if blank, full name will be used instead)
+title: AI Bytes # the website title (if blank, full name will be used instead)
 first_name: Ben
 middle_name:
 last_name: Athiwaratkun
@@ -119,7 +119,7 @@ bing_site_verification:  # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: Ben's Bytes # blog_name will be displayed in your blog page
+blog_name: AI Bytes # blog_name will be displayed in your blog page
 blog_nav_title: # your blog must have a title for it to be displayed in the nav bar
 blog_description:  A Byte-Sized Look at the World of AI
 permalink: //:year-:month/:title/
@@ -264,7 +264,7 @@ jekyll-archives:
     category: '/blog/category/:name/'
 
 #display_tags: ['formatting', 'images', 'links', 'math', 'code'] # this tags will be dispalyed on the front page of your blog
-display_tags: [ '#chatgpt', 'transformers', 'gpt3', 'gpt4', 'generativeai', 'llm']
+display_tags: ['transformers', 'chatgpt', ] # '#chatgpt', 'transformers', 'gpt3', 'gpt4', 'generativeai', 'llm']
 
 # -----------------------------------------------------------------------------
 # Jekyll Scholar
