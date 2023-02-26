@@ -2,7 +2,7 @@
 layout: distill
 title: The Illustrated Attention via Einstein Summation
 date:   2022-11-15
-description:  
+description: Introduction to einsum with attention operations.
 tags: llm attention transformers gpt
 categories: transformers
 published: true

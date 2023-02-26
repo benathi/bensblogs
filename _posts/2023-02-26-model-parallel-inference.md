@@ -1,8 +1,8 @@
 ---
 layout: distill
-title: Tensor Parallelism
+title: The Illustrated Tensor Parallelism
 date:   2022-11-17
-description:  
+description: The framework behind using large language models for inference and tensor parallel training, explained with math, code, and illustrations.
 tags: llm attention transformers gpt
 categories: transformers
 published: true
