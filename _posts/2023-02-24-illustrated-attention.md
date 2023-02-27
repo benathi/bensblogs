@@ -6,7 +6,7 @@ description: Introduction to einsum with attention operations.
 tags: llm attention transformers gpt
 categories: transformers
 published: true
-
+giscus_comments: true
 
 authors:
   - name: Ben Athiwaratkun 
@@ -141,5 +141,34 @@ We describe the attention in two stages. Given inputs with batch size b and m to
 * Note that all the notation from context encoding also applies, with query length $$n=1$$.
 
 
+
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/attention_refined.svg"
+  class="img-fluid rounded z-depth-1"
+  padding="10px"
+%}
+</div>
+
+
+
+
+<!--
+  <script src="https://giscus.app/client.js"
+  data-repo="benathi/blogs"
+  data-repo-id="R_kgDOI_5r3w"
+  data-category="Ideas"
+  data-category-id="DIC_kwDOI_5r384CUfWs"
+  data-mapping="pathname"
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="top"
+  data-theme="preferred_color_scheme"
+  data-lang="en"
+  crossorigin="anonymous"
+  async>
+  </script>
+-->
 
 

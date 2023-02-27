@@ -7,6 +7,7 @@ tags: llm attention transformers gpt
 categories: transformers
 published: true
 social: true
+giscus_comments: true
 
 authors:
   - name: Ben Athiwaratkun 
@@ -171,3 +172,4 @@ In order to do tensor parallel, we use similar principles as in the attention te
   caption="Figure 3: Feedforward Tensor Parallelism"
 %}
 </div>
+
