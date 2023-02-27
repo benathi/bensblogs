@@ -142,17 +142,6 @@ We describe the attention in two stages. Given inputs with batch size b and m to
 
 
 
-<div class="col-sm mt-3 mt-md-0">
-{% include figure.html
-  path="assets/img/blogs/attention_refined.svg"
-  class="img-fluid rounded z-depth-1"
-  padding="10px"
-%}
-</div>
-
-
-
-
 <!--
   <script src="https://giscus.app/client.js"
   data-repo="benathi/blogs"

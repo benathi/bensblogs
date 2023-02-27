@@ -75,25 +75,14 @@ The following table provides analysis for number of operations and memory access
 | Input (x) bd                                                                                  |                              |                        | bhk*d = bd^2           |
 | q = <x, P_q>                                                                                  | bd + hdk = bd + d^2          | bd + d^2               | bhk*d = bd^2           |
 | K = <x, P_k> + (append previous) <br> [MH] bd,hdk → bhk (+ bmhk) <br> [MQ] bd,dk → bk (+ bmk) | bd + d^2                     | bd + dk | bhv*d = bd^2 |
-| V = <x, P_v> +[append previous] <br> [MH] bd,hdv → bhv [ bmhv] <br> [MQ] bd,dk → bv [ bmv]              | bd + d^2                     | bd + dv | bhm*k = bmd |
-| logits = <q, K> <br> [MH] bhk,bhmk → bhm <br> [MQ] bhk,bmk → bhm                                        | bhk + bhmk = bd + bmd        | bhk + bmk = bd + bmk | bhm |
-| weights: softmax                                                                              | bhm                          | bhm                    | bhv*m = bmd            |
+| V = <x, P_v> +[append previous] <br> [MH] bd,hdv → bhv [ bmhv] <br> [MQ] bd,dk → bv [ bmv]              | bd +                      | bd + dv | bhm*k = bmd |
+| logits = <q, K> <br> [MH] $$bhk,bhmk \to bhm$$ <br> [MQ] bhk,bmk → bhm                                        | bhk + bhmk = bd + bmd        | bhk + bmk = bd + bmk | bhm |
+| weights: softmax                                                                              | $$bhm$$                          | bhm                    | bhv*m = bmd            |
 | out(O) = <weights, V> <br> [MH] bhm,bhmv → bhv <br> [MQ] bhm,bmv → bhv                                  | bhm + bhmv = bhm + bmd       | bhm + bmv | bdhv = bd^2 |
 | y=<O, P_O> bhv,hdv → bd                                                                       | bd + d^2                     | bd + d^2               | bmd + bd^2 ~ bd^2     |
 | Total                                                                                         | bd + bmd + d^2               | bd + bmk + d^2         |                        |
 | Ratio of Memory Access Per Computation Operatios                                              | 1/d + m/d + 1/b              | 1/d + m/(dh) + 1/b |                        |
 
-
-|Tensor Operation	|Memory Access Complexity	|Computation complexity	|
-|---	|---	|---	|
-|Input (x)
-     bd	|-	|-	|bhk*d = bd^2	|
-|q = <x, P_q>	|bd,hdk → bhk	|bd + hdk = bd + d^2	|bhk*d = bd^2	|
-|K = <x, P_k> + (append previous)	|Multi-Head
- bd,**h**dk → b**h**k (+ bm**h**k)	|bd + d^2	|bhv*d = bd^2	|
-|Multi-Query
-bd,**1**dk → b**1**k (+ bm**1**k)	|bd + dk	|
-|	|	|	|	|
 
 
 
@@ -149,3 +138,180 @@ The table below shows the analysis per each operation. The memory access complex
 
 
 The dimensionality reduction of P_K and P_V leads to lower number of parameters (for example, 12.8B multi-attention model becomes 10.5B multi-query model, fixing all other configurations constant). In order to scale up the multi-query attention model to be of similar size, we can increase other configurations such as h or d/h.
+
+
+
+## HTML
+
+
+<div data-section-style='13'><table id='temp:C:ARCe2abb688a68848319771bd46e' title='Sheet2' style='width: 37.8667em'><tbody><tr id='temp:C:ARC452cc1ca30f04935bbe5ad8fb'><td id='temp:s:temp:C:ARC452cc1ca30f04935bbe5ad8fb;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>Tensor Operation
+
+<br/></td><td id='temp:s:temp:C:ARC452cc1ca30f04935bbe5ad8fb;temp:C:ARCcea2402f92e64ecf822073c13' style=''>Memory Access Complexity
+
+<br/></td><td id='temp:s:temp:C:ARC452cc1ca30f04935bbe5ad8fb;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARC452cc1ca30f04935bbe5ad8fb;temp:C:ARCa5511b3951354fb19e888abaf' style='text-align: center;' class='bold'>Computation complexity
+
+<br/></td></tr><tr id='temp:C:ARC9369c1ad70484d8599bce7b3b'><td id='temp:s:temp:C:ARC9369c1ad70484d8599bce7b3b;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARC9369c1ad70484d8599bce7b3b;temp:C:ARCcea2402f92e64ecf822073c13' style='text-align: center;' class='bold'>Multi-Head
+
+<br/></td><td id='temp:s:temp:C:ARC9369c1ad70484d8599bce7b3b;temp:C:ARC8e15f11d99e945afa3b8693b0' style='text-align: center;' class='bold'>Multi-Query
+
+<br/></td><td id='temp:s:temp:C:ARC9369c1ad70484d8599bce7b3b;temp:C:ARCa5511b3951354fb19e888abaf' style=''>
+
+<br/></td></tr><tr id='temp:C:ARC0cf38cd16612478dbc923865b'><td id='temp:s:temp:C:ARC0cf38cd16612478dbc923865b;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>Input (x) : bd
+
+<br/></td><td id='temp:s:temp:C:ARC0cf38cd16612478dbc923865b;temp:C:ARCcea2402f92e64ecf822073c13' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARC0cf38cd16612478dbc923865b;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARC0cf38cd16612478dbc923865b;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bhk*d = bd^2
+
+<br/></td></tr><tr id='temp:C:ARCe0fd151d8f5d4103987a8f87d'><td id='temp:s:temp:C:ARCe0fd151d8f5d4103987a8f87d;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>q = &lt;x, P_q&gt;<br>bd,hdk → bhk
+
+<br/></td><td id='temp:s:temp:C:ARCe0fd151d8f5d4103987a8f87d;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bd + hdk = bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARCe0fd151d8f5d4103987a8f87d;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARCe0fd151d8f5d4103987a8f87d;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bhk*d = bd^2
+
+<br/></td></tr><tr id='temp:C:ARCf0f6277688a84536b3fd6e010'><td id='temp:s:temp:C:ARCf0f6277688a84536b3fd6e010;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>K = &lt;x, P_k&gt; + (append previous)<br>[MH] bd,hdk → bhk (+ bmhk)<br>[MQ] bd,<span style="color:#cc0300" textcolor="#cc0300">dk</span> → <span style="color:#cc0300" textcolor="#cc0300">bk (+ bmk)</span>
+
+<br/></td><td id='temp:s:temp:C:ARCf0f6277688a84536b3fd6e010;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARCf0f6277688a84536b3fd6e010;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bd + <span style="color:#cc0300" textcolor="#cc0300">dk</span>
+
+<br/></td><td id='temp:s:temp:C:ARCf0f6277688a84536b3fd6e010;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bhv*d = bd^2
+
+<br/></td></tr><tr id='temp:C:ARC0398c63907e3443dbbbf6141a'><td id='temp:s:temp:C:ARC0398c63907e3443dbbbf6141a;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>V = &lt;x, P_v&gt; +[append previous]<br>[MH] bd,hdv → bhv [ bmhv]<br>[MQ] bd,<span style="color:#cc0300" textcolor="#cc0300">dk</span> → <span style="color:#cc0300" textcolor="#cc0300">bv [ bmv]</span>
+
+<br/></td><td id='temp:s:temp:C:ARC0398c63907e3443dbbbf6141a;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARC0398c63907e3443dbbbf6141a;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bd + <span style="color:#cc0300" textcolor="#cc0300">dv</span>
+
+<br/></td><td id='temp:s:temp:C:ARC0398c63907e3443dbbbf6141a;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bhm*k = bmd
+
+<br/></td></tr><tr id='temp:C:ARCc07958f73e8c4f0cba6f9f1b9'><td id='temp:s:temp:C:ARCc07958f73e8c4f0cba6f9f1b9;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>logits = &lt;q, K&gt;<br>[MH] $$bhk,bhmk \to bhm$$<br>[MQ] bhk,<span style="color:#cc0300" textcolor="#cc0300">bmk </span>→ bhm
+
+<br/></td><td id='temp:s:temp:C:ARCc07958f73e8c4f0cba6f9f1b9;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bhk + bhmk = bd + bmd
+
+<br/></td><td id='temp:s:temp:C:ARCc07958f73e8c4f0cba6f9f1b9;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bhk + <span style="color:#cc0300" textcolor="#cc0300">bmk</span> = bd + <span style="color:#cc0300" textcolor="#cc0300">bmk</span>
+
+<br/></td><td id='temp:s:temp:C:ARCc07958f73e8c4f0cba6f9f1b9;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bhm
+
+<br/></td></tr><tr id='temp:C:ARC276af083551c4daebd1890543'><td id='temp:s:temp:C:ARC276af083551c4daebd1890543;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>weights: softmax
+
+<br/></td><td id='temp:s:temp:C:ARC276af083551c4daebd1890543;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bhm
+
+<br/></td><td id='temp:s:temp:C:ARC276af083551c4daebd1890543;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bhm
+
+<br/></td><td id='temp:s:temp:C:ARC276af083551c4daebd1890543;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bhv*m = bmd
+
+<br/></td></tr><tr id='temp:C:ARCa8582f1e7c8141aa9c6e7508c'><td id='temp:s:temp:C:ARCa8582f1e7c8141aa9c6e7508c;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>out(O) = &lt;weights, V&gt;<br>[MH] bhm,bhmv → bhv<br>[MQ] bhm,<span style="color:#cc0300" textcolor="#cc0300">bmv</span> → bhv
+
+<br/></td><td id='temp:s:temp:C:ARCa8582f1e7c8141aa9c6e7508c;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bhm + bhmv = bhm + bmd
+
+<br/></td><td id='temp:s:temp:C:ARCa8582f1e7c8141aa9c6e7508c;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bhm + <span style="color:#cc0300" textcolor="#cc0300">bmv</span>
+
+<br/></td><td id='temp:s:temp:C:ARCa8582f1e7c8141aa9c6e7508c;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bdhv = bd^2
+
+<br/></td></tr><tr id='temp:C:ARC2021bf8d0e12457fa666af5eb'><td id='temp:s:temp:C:ARC2021bf8d0e12457fa666af5eb;temp:C:ARC8b1ecc9aa321466f904204cbe' style=''>y=&lt;O, P_O&gt;<br>bhv,hdv → bd
+
+<br/></td><td id='temp:s:temp:C:ARC2021bf8d0e12457fa666af5eb;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARC2021bf8d0e12457fa666af5eb;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARC2021bf8d0e12457fa666af5eb;temp:C:ARCa5511b3951354fb19e888abaf' style=''>bmd + bd^2 ~ bd^2
+
+<br/></td></tr><tr id='temp:C:ARC3c7946831a3140cbaaeb1e71f'><td id='temp:s:temp:C:ARC3c7946831a3140cbaaeb1e71f;temp:C:ARC8b1ecc9aa321466f904204cbe' style='' class='bold'>Total
+
+<br/></td><td id='temp:s:temp:C:ARC3c7946831a3140cbaaeb1e71f;temp:C:ARCcea2402f92e64ecf822073c13' style=''>bd + bmd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARC3c7946831a3140cbaaeb1e71f;temp:C:ARC8e15f11d99e945afa3b8693b0' style=''>bd + bmk + d^2
+
+<br/></td><td id='temp:s:temp:C:ARC3c7946831a3140cbaaeb1e71f;temp:C:ARCa5511b3951354fb19e888abaf' style=''>
+
+<br/></td></tr><tr id='temp:C:ARC0e17d13c70f44af98309f3f9c'><td id='temp:s:temp:C:ARC0e17d13c70f44af98309f3f9c;temp:C:ARC8b1ecc9aa321466f904204cbe' style='' class='bold'>Ratio of Memory Access Per Computation Operatios
+
+<br/></td><td id='temp:s:temp:C:ARC0e17d13c70f44af98309f3f9c;temp:C:ARCcea2402f92e64ecf822073c13' style='' class='bold'>1/d + m/d + 1/b
+
+<br/></td><td id='temp:s:temp:C:ARC0e17d13c70f44af98309f3f9c;temp:C:ARC8e15f11d99e945afa3b8693b0' style='' class='bold'>1/d + <span style="color:#cc0300" textcolor="#cc0300">m/(dh) </span>+ 1/b
+
+<br/></td><td id='temp:s:temp:C:ARC0e17d13c70f44af98309f3f9c;temp:C:ARCa5511b3951354fb19e888abaf' style=''>
+
+
+
+
+
+
+
+
+
+<br/></td></tr></tbody></table></div><br/>
+
+<div data-section-style='13'><table id='temp:C:ARC7b5f743f03904bdf953e4ff27' title='Sheet5' style='width: 51.6em'><tbody><tr id='temp:C:ARC51a3a1f6ae6d48898c2d5f623'><td id='temp:s:temp:C:ARC51a3a1f6ae6d48898c2d5f623;temp:C:ARCaa576dfd3eca42688222c82bf' style='text-align: center;'>Tensor Operation
+
+<br/></td><td id='temp:s:temp:C:ARC51a3a1f6ae6d48898c2d5f623;temp:C:ARC344eac748b9d431fb18f55bda' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARC51a3a1f6ae6d48898c2d5f623;temp:C:ARC268ab7cdaeb24ca4bbfaa29c3' style='text-align: center;'>Memory Access Complexity
+
+<br/></td><td id='temp:s:temp:C:ARC51a3a1f6ae6d48898c2d5f623;temp:C:ARC5e65002135924663bca08ad36' style='text-align: center;' class='bold'>Computation complexity
+
+<br/></td></tr><tr id='temp:C:ARC0c44081cc63d495288f302cbf'><td id='temp:s:temp:C:ARC0c44081cc63d495288f302cbf;temp:C:ARCaa576dfd3eca42688222c82bf' style=''>Input (x)<br>     bd
+
+<br/></td><td id='temp:s:temp:C:ARC0c44081cc63d495288f302cbf;temp:C:ARC344eac748b9d431fb18f55bda' style='text-align: center;'>-
+
+<br/></td><td id='temp:s:temp:C:ARC0c44081cc63d495288f302cbf;temp:C:ARC268ab7cdaeb24ca4bbfaa29c3' style='text-align: center;'>-
+
+<br/></td><td id='temp:s:temp:C:ARC0c44081cc63d495288f302cbf;temp:C:ARC5e65002135924663bca08ad36' style=''>bhk*d = bd^2
+
+<br/></td></tr><tr id='temp:C:ARC53cd255daacf4c19a64d1dffa'><td id='temp:s:temp:C:ARC53cd255daacf4c19a64d1dffa;temp:C:ARCaa576dfd3eca42688222c82bf' style=''>q = &lt;x, P_q&gt;
+
+<br/></td><td id='temp:s:temp:C:ARC53cd255daacf4c19a64d1dffa;temp:C:ARC344eac748b9d431fb18f55bda' style='text-align: left;'>bd,hdk → bhk
+
+<br/></td><td id='temp:s:temp:C:ARC53cd255daacf4c19a64d1dffa;temp:C:ARC268ab7cdaeb24ca4bbfaa29c3' style='text-align: center;'>bd + hdk = bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARC53cd255daacf4c19a64d1dffa;temp:C:ARC5e65002135924663bca08ad36' style='text-align: center;'>bhk*d = bd^2
+
+<br/></td></tr><tr id='temp:C:ARCccbe11af06e54231b6a3b2df2'><td id='temp:s:temp:C:ARCccbe11af06e54231b6a3b2df2;temp:C:ARCaa576dfd3eca42688222c82bf' style=''>K = &lt;x, P_k&gt; + (append previous)
+
+<br/></td><td id='temp:s:temp:C:ARCccbe11af06e54231b6a3b2df2;temp:C:ARC344eac748b9d431fb18f55bda' style='text-align: left;'>Multi-Head<br> bd,<b>h</b>dk → b<b>h</b>k (+ bm<b>h</b>k)
+
+<br/></td><td id='temp:s:temp:C:ARCccbe11af06e54231b6a3b2df2;temp:C:ARC268ab7cdaeb24ca4bbfaa29c3' style='text-align: center;'>bd + d^2
+
+<br/></td><td id='temp:s:temp:C:ARCccbe11af06e54231b6a3b2df2;temp:C:ARC5e65002135924663bca08ad36' style='text-align: center;'>bhv*d = bd^2
+
+<br/></td></tr><tr id='temp:C:ARC2fe2b1b97ffe4f5ebc4f8e718'><td id='temp:s:temp:C:ARC2fe2b1b97ffe4f5ebc4f8e718;temp:C:ARCaa576dfd3eca42688222c82bf' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARC2fe2b1b97ffe4f5ebc4f8e718;temp:C:ARC344eac748b9d431fb18f55bda' style='text-align: left;'>Multi-Query<br>bd,<b>1</b>dk → b<b>1</b>k (+ bm<b>1</b>k)
+
+<br/></td><td id='temp:s:temp:C:ARC2fe2b1b97ffe4f5ebc4f8e718;temp:C:ARC268ab7cdaeb24ca4bbfaa29c3' style='text-align: center;'>bd + dk
+
+<br/></td><td id='temp:s:temp:C:ARC2fe2b1b97ffe4f5ebc4f8e718;temp:C:ARC5e65002135924663bca08ad36' style='text-align: center;'>
+
+<br/></td></tr><tr id='temp:C:ARCdc598b74c80f4307aaf0b6acd'><td id='temp:s:temp:C:ARCdc598b74c80f4307aaf0b6acd;temp:C:ARCaa576dfd3eca42688222c82bf' style=''>
+
+<br/></td><td id='temp:s:temp:C:ARCdc598b74c80f4307aaf0b6acd;temp:C:ARC344eac748b9d431fb18f55bda' style='text-align: left;'>
+
+<br/></td><td id='temp:s:temp:C:ARCdc598b74c80f4307aaf0b6acd;temp:C:ARC268ab7cdaeb24ca4bbfaa29c3' style='text-align: center;'>
+
+<br/></td><td id='temp:s:temp:C:ARCdc598b74c80f4307aaf0b6acd;temp:C:ARC5e65002135924663bca08ad36' style='text-align: center;'>
+
+<br/></td></tr></tbody></table></div><br/>
+
+<br/>
+
+<br/>
+
+<br/>
+
+<b>Observations</b><br/>
+
+<div data-section-style='5' style="" class=""><ul id='temp:C:ARC49d7eabc10084787916ee0ae4'><li id='temp:C:ARC29d27b5b04d44fb29e6d2aae5' class='' value='1'>for b ~ 1 or m ~ d, the number of memory access is high compared to the number of operations
+
+<br/></li><li id='temp:C:ARC290a1c8166684e618280904bf' class=''>For multi-query, the offending term m/d is reduced by h to m/(dh)
+
+<br/></li></ul></div><br/>
+
+<h3 id='temp:C:ARC6deb4e9cd272465aa77b606d4'>Batch Computation Cost for Multi-Head Attention (can be skipped)</h3>
