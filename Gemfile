@@ -16,6 +16,7 @@ group :jekyll_plugins do
     gem 'mini_racer'
     gem 'unicode_utils'
     gem 'webrick'
+    # gem 'jekyll-pygments-themes', git: 'https://github.com/jwarby/jekyll-pygments-themes.git'
 end
 group :other_plugins do
     gem 'httparty'
