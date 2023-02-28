@@ -1,8 +1,8 @@
 ---
 layout: distill
-title: Analysis of Inference Efficiency of Multi-Query Attention
+title: Memory IO Efficiency of Multi-Query Attention
 date:   2023-02-01
-description: Memory IO complexity
+description: Multi-query attention can be much more efficient under large batch and context length.
 tags: llm 
 categories: transformers
 published: true
@@ -55,7 +55,7 @@ _styles: >
   
 ---
 
-
+**Currently in draft mode**
 
 
 ## Multi-Query Attention at a Glance
@@ -236,4 +236,7 @@ $$
 
 
 The dimensionality reduction of P_K and P_V leads to lower number of parameters (for example, 12.8B multi-attention model becomes 10.5B multi-query model, fixing all other configurations constant). In order to scale up the multi-query attention model to be of similar size, we can increase other configurations such as h or d/h.
+
+
+## Empirical Results
 
