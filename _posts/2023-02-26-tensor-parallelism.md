@@ -28,11 +28,7 @@ toc:
   - name: Overview
   - subsections:
     - name All-Reduce
-      
-    # if a section has subsections, you can add them as follows:
-    # subsections:
-    #   - name: Example Child Subsection 1
-    #   - name: Example Child Subsection 2
+  - name: High-Level Illustration
   - name: Attention Parallel
   - subsections:
     - name Output Parallel
@@ -172,4 +168,6 @@ In order to do tensor parallel, we use similar principles as in the attention te
   caption="Figure 3: Feedforward Tensor Parallelism"
 %}
 </div>
+
+
 

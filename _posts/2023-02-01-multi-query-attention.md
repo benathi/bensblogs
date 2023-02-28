@@ -4,7 +4,7 @@ title: Analysis of Inference Efficiency of Multi-Query Attention
 date:   2023-02-01
 description: Memory IO complexity
 tags: llm 
-categories: 
+categories: transformers
 published: true
 giscus_comments: true
 enable_math: true
@@ -25,16 +25,16 @@ bibliography: 2018-12-22-distill.bib
 #   - we may want to automate TOC generation in the future using
 #     jekyll-toc plugin (https://github.com/toshimaru/jekyll-toc).
 toc:
-  - name: Notation
+#  - name: Notation
     # if a section has subsections, you can add them as follows:
     # subsections:
     #   - name: Example Child Subsection 1
     #   - name: Example Child Subsection 2
-  - name: Tensor Operations
-  - name: Multi-Head Attention
-  - subsections:
-    - name: Context Computation
-    - name: Incremental Decoding
+#  - name: Tensor Operations
+#  - name: Multi-Head Attention
+#  - subsections:
+#    - name: Context Computation
+#    - name: Incremental Decoding
 
 
 
@@ -58,7 +58,7 @@ _styles: >
 
 
 
-### Multi-Query Architecture at a Glance
+## Multi-Query Attention at a Glance
 
 The key difference of multi-query attention is to collapse all the heads of the projection matrices P_K and P_V to only 1 head. All other projection matrices (P_Q and P_O) still have sizes ‘hdk’. P_K and P_V have the size reduction described below. 
 
@@ -66,6 +66,8 @@ The key difference of multi-query attention is to collapse all the heads of the 
 * P_V: ‘hdv’ [multi attention] → ‘dv’ [multi query]
 
 
+
+## Background
 
 **Need a diagram here showing a projection, then the use of key and value tensors during attention.**
 
@@ -77,12 +79,11 @@ Note that given an input x of hidden dimension d, during incremental decoding, x
 
 At a high level, the number operations and memory access for the computation “A,B → C” are (when A,B are expressed in terms of dimension like in Einstein sum)
 
-* Number of operations: O(product(distinct dimensions in A and B)))
-* Number of memory access: O(|A|) + O(|B|) where |A| is the size of the tensor A (product of all dimensions).
-* For example, “bhnv, hdv → bnd” requires
-    * O(bhndv) = O(bnd^2) number of operations
-    * and O(bhnv + hdv) = O(bnd + d^2) memory access
-* Long version with explanations: ...
+* Number of operations: $$\small O( \text{product}(\text{distinct dimensions in A and B})))$$
+* Number of memory access: $$\small \mathcal{O}(\vert A \vert) + O( \vert B \vert )$$ where $$\small \vert A \vert$$ is the size of the tensor A (product of all dimensions).
+* For example, $$\small bhnv, hdv \to bhnd$$ requires
+    * $$\small \mathcal{O}(bhndv) = \mathcal{O}(bnd^2)$$ number of operations
+    * and $$\small \mathcal{O}(bhnv + hdv + bhnd)$$ memory access for both of the inputs as well as the output.
 
 ### Details — Operation and Memory Access Counting (can be skipped)
 
@@ -96,7 +97,23 @@ At a high level, the number operations and memory access for the computation “
 
 
 
-### Incremental Decoding Cost
+
+## Memory IO Cost
+
+
+
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/attention-multiquery.svg"
+  class="img-fluid rounded z-depth-1"
+  padding="10px"
+    caption="Figure 2: Attention Parallel"
+%}
+</div>
+
+
+
+### Incremental Decoding
 
 **Main Takeaway**
 The calculations that incur the highest amount of memory access for normal multi-head attention are the logits and output calculations in [Table A] which involves the following tensor operation (for logits)

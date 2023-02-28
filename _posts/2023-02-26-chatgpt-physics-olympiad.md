@@ -1,7 +1,7 @@
 ---
 layout: post
 title: ChatGPT Can Be a Physics Olympiad Contestant
-date:   2023-03-05
+date:   2023-03-27
 description: ChatGPT would receive an honorable mention.
 tags: llm 
 categories: 
