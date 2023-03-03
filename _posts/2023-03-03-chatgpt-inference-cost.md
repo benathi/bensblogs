@@ -56,8 +56,8 @@ _styles: >
 
 ## TL;DR
 
-- The estimated cost assuming sufficient batching across users request is around `0.062` cents per 1k, which is `~3.2` times lower the API price at `0.2` cents. 
-- Without batching across users, the cost can be as high as `0.7` cents, which is 3.5 higher than the offering price. We can see that batching is key.
+- The estimated cost assuming sufficient batching across users request is around `0.062` cents per 1k tokens, which is `~3.2` times lower the API price at `0.2` cents. 
+- Without batching across users, the cost can be ~`0.7` cents per 1k tokens, which is 3.5x higher than the offering price. Batching requests across users is key!
 - ChatGPT needs high volume of requests to offer such price, which is likely possible due to the popularity. Other competitors will require such economies of scale to provide such low-cost offering.
 
 
