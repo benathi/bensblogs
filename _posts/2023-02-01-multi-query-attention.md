@@ -16,7 +16,7 @@ authors:
 #      name: AWS AI Labs
 
 
-bibliography: 2018-12-22-distill.bib
+bibliography: benathi-references.bib
 
 # Optionally, you can add a table of contents to your post.
 # NOTES:
@@ -88,7 +88,7 @@ At a high level, the number operations and memory access for the tensor computat
 * The number of operations for $$A,B \to C$$ is the number of duplicates * the number of base operations.
     * Example 1: $$bhnk, bhmk \to bhnm$$ has $$bh$$ number of duplicates where the base operation is $$nk,mk→ nm$$ since $$bh$$ are the dimensions that are shared across all inputs and output. This matrix multiplication $$nk,mk \to nm$$ requires $$nmk$$ operations. Therefore, total number of operations is $$\mathcal{O}(bh * nmk )$$.
         * Note. for $$nk,mk \to nm$$, $$n$$ and $$m$$ are the non-interacting dimensions and $$k$$ is the interacting dimension (getting summed over). The number of operations in general equals product(set(non-interacting dimensions)) * interacting dimension = nm * k.
-    * Example 2: $$bhnv, hdv \to bnd$$. In this case, there’s no duplicate dimensions across inputs and output. Since this can be framed as “bn * hv, d * hv → bnd”, we see that bn and d are the non-interacting dimensions and hv are the interacting one. Therefore, the number of operations is $$\mathcal{O}(bnd * hv )$$
+    * Example 2: $$bhnv, hdv \to bnd$$. In this case, there’s no duplicate dimensions across inputs and output. Since this can be framed as $$bn * hv, d * hv \to bnd$$, we see that bn and d are the non-interacting dimensions and hv are the interacting one. Therefore, the number of operations is $$\mathcal{O}(bnd * hv )$$
     * In general, this is equivalent to product(set(A, B)) where A and B here represent the dimensions.
 
 
@@ -180,20 +180,20 @@ Note: $$r$$ is the ratio of memory access complexity versus computation complexi
 
 **Observations**
 
-* for b ~ 1 or m ~ d, the number of memory access is high compared to the number of operations
-* For multi-query, the offending term m/d is reduced by h to m/(dh)
+* for $$b \sim 1$$ or $$m \sim d$$, the number of memory access is high compared to the number of operations
+* For multi-query, the offending term $$m/d$$ is reduced by $$h$$ to $$m/(dh)$$.
 
 
 
 ### Batch Computation Cost for Multi-Head Attention (can be skipped)
 
-Batch computation in this case refers to when we compute attentions corresponding to ‘n’ tokens. The analysis below shows that the number of memory access per operation is << 1 in which makes it quite efficient.
+Batch computation in this case refers to when we compute attentions corresponding to `n` tokens. The analysis below shows that the number of memory access per operation is much less than 1-to-1 in which makes it quite efficient.
 
-The table below shows the analysis per each operation. The memory access complexity are the same for both multi-head and multi-query. In practice, the multi-query setting is slightly faster due to lower constants. (In MQ, some d^2 terms are reduced to dk for example, but the total complexity is still bounded by d^2)
+The table below shows the analysis per each operation. The memory access complexity are the same for both multi-head and multi-query. In practice, the multi-query setting is slightly faster due to lower constants. (In MQ, some $$d^2$$ terms are reduced to $$dk$$, for example, but the total complexity is still bounded by $$d^2$$)
 
 
 <br>
-**Table 2**: Memory Access and Computation Complexities for Batch Computation with Multi-Head and Multi-Query Attention.
+**Table 2**: Memory Access and Computation Complexities for Batch Computation with Multi-Head and Multi-Query Attention. Note that we use `n` and `m` for final calculation of memory access and number of computations quite interchangeably since they are the same.
 
 $$
 \scriptsize{
@@ -216,7 +216,7 @@ V = \langle M, P_v \rangle  & [MH] \ bmd,d{\color{red}{h}}v \rightarrow b{\color
 \text{weights: softmax} & & bhnm & bhnm \\
 \rule{0pt}{2em}
 \text{out(O)} = \langle \text{weights}, V \rangle & [MH] \ bhnm,b{\color{red}{h}}mv \rightarrow bhnv & bhnm + bhmv = bhnm + bm{\color{red}{d}} & bhnmv = bmnd = bn^2d \\
- & [MQ] \ bhnm,bmv \rightarrow bhnv & bhnm + bm{\color{red}{v}} + bnd & \\
+ & [MQ] \ bhnm,bmv \rightarrow bhnv & bhnm + bm{\color{red}{v}} + {\color{red}{bnd}} & \\
 \rule{0pt}{2em}
 y=\langle O, P_O \rangle & bhnv,hvd \rightarrow bnd & bnd + d^2 & bndhv = bnd^2  \\
 \rule{0pt}{2em}
@@ -236,19 +236,21 @@ $$
 * Note: We perform some approximations such as (1) $$dk < d^2$$ and (2) $$bnk < bnd$$ to arrive at the total memory access.
 * To approximate the total computation, we assume that $$d >> n$$ which means that $$bnd^2 >> bn^2d$$, so the latter can be ignored.
 * Both MQ and MH have the same memory access complexity in the batch case, leading to the same efficiency for context encoding.
-* The context encoding is the compute-bound regime where all $$n$$ queries and m keys interact all at once.
+
+
+## Implications
+* The context encoding is the compute-bound regime where all query and key interact over all positions at once. Typically, for a ~10B model, this context encoding latency on a single GPU can be around 400 ms for 2000 input length. This equates to roughly 0.1 ms per token on average. In contrast, the per token latency of such a model would typically be around ~10 ms at best. We can see that the incremental decoding is roughly 100 times (10 ms / 0.1 ms) less efficient.
+* One can typically perform incremental decoding with similar latency while increasing batch size from 1 up to a certain batch size where GPU memory would hit the limit. Increasing batch size increases inference efficiency since the model parameters are used to compute over many samples rather than just 1.
+* Multi-query can help reduce the memory consumption during incremental decoding quite significantly, and also help flatten the inference latency to increase much slower than in the MH case when batch size `b` or context length `m` increase.
+* Note - The dimensionality reduction of $$P_K$$ and $$P_V$$ leads to lower number of parameters (for example, 13B multi-head attention model becomes 10.5B multi-query model, fixing all other configurations constant). In order to scale up the multi-query attention model to be of similar size, one can increase other configurations.
+* Plot on latency and memory consumption -- coming soon!
+
 
 <!--
 * We will see in the inference latency benchmark that, even for 13B model, the amortized latency cost per token is ~ 0.2 ms instead of 30+ ms / step for incremental decoding. We can see clearly that in terms of computation capacity, current GPUs are already quite fast when computation can be done in batch to reduce memory I/O. The main bottleneck for incremental decoding is memory access.
 -->
 
 
-
-
-#### Notes
-
-
-The dimensionality reduction of $$P_K$$ and $$P_V$$ leads to lower number of parameters (for example, 13B multi-head attention model becomes 10.5B multi-query model, fixing all other configurations constant). In order to scale up the multi-query attention model to be of similar size, one can increase other configurations.
 
 
 <!--
