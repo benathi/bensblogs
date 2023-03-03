@@ -5,7 +5,7 @@ date:  2022-12-05
 description: AI alignment will be the next big challenge
 tags: chatgpt agi
 categories: 
-published: true
+published: false
 ---
 
 A series of interactions with ChatGPT where after prompted with certain phrases, can snap out of alignment.
