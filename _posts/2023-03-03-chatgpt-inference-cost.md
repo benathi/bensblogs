@@ -99,7 +99,7 @@ $$ \frac{0.023}{e} \text{ cents / 1k token} $$
 
 
 * Example: If `e = 40%`, the cost becomes `0.057` cents per 1k tokens.
-* **At the current price of `0.2` cents per 1k tokens, it is 3.5X more expensive that the cost of `0.057` cents. This translates to ~2.5 times profit.** 
+* **The current price of `0.2` cents per 1k tokens is 3.5X more than the cost at `0.057` cents. This translates to ~2.5 times profit.**
 * **Caveat** This takes into account only the context encoding time. The incremental decoding time is generally less efficient, but if things are batched well across users, it is possible to attain the same efficiency as the context computation cases. 
 
 <!--
@@ -120,7 +120,7 @@ Overall, the cost to process input with context length C and generate T steps (C
 
 $$ \text{total process cost per 1k tokens} =  (0.057 C + 0.115 T)/(C+T) $$
 
-Using $$C=1$$ and $$T=0.1$$ (generate 100 tokens based on 1k context length), then the cost to process 1k tokens on average is `0.062`, still pretty close to `0.57`. The profit would be 3.2x.
+Using $$C=1$$ and $$T=0.1$$ (generate 100 tokens based on 1k context length), then the cost to process 1k tokens on average is `0.062`, still pretty close to `0.057`. The profit would be 3.2x.
 
 
 
