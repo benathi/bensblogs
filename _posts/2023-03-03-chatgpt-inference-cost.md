@@ -56,8 +56,8 @@ _styles: >
 
 ## TL;DR
 
-- The estimated cost assuming sufficient batching across users request is around `0.062` cents per 1k tokens, which is `~3.2` times lower the API price at `0.2` cents. 
-- Without batching across users, the cost can be ~`0.7` cents per 1k tokens, which is 3.5x higher than the offering price. Batching requests across users is key!
+- The estimated cost assuming sufficient batching requests across different users is around `0.062` cents per 1k tokens, which is `~3.2` times lower the API price at `0.2` cents. 
+- Without batching across users, the cost can be ~`0.7` cents per 1k tokens, which is 3.5x higher than the offering price. Batching requests is key!
 - ChatGPT needs high volume of requests to offer such price, which is likely possible due to the popularity. Other competitors will require such economies of scale to provide such low-cost offering.
 
 
@@ -151,3 +151,8 @@ $$ \text{total process cost per 1k tokens (batch 1)} =  (0.057 C + 7.2 T)/(C+T) 
 * **Batching across users is key**. 
 With economies of scale which OpenAI likely has due to ChatGPT's popularity, sufficient batching by aggregating multiple users request makes the inference becomes quite cheap at ~`0.076` cents per 1k tokens. Moreover, the requests can be grouped by how long the inputs are to avoid any inefficiency due to padding with the batch inference.
 * Other competitor's inference cost likely lies between `7` cents per 1k tokens and `0.076` cents, depending on how many users at a given time which dictates the batch size used.
+
+
+## FAQs
+* Q: Why is the calculation on context computation based on FLOPs but the calculation on incremental decoding based on actual latency?
+* A: This is because the context computation is more compute-bound whereas the incremental decoding is more memory-bound. That is, the incremental decoding, it can take a lot more time to load the tensors to SRAM from HBM  for computation rather than the time to do actual computation. SRAM is the flash memory for computation, usually very small, and HBM is the high bandwidth memory, which is the bulk of GPU memory.
