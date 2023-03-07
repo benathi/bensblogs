@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 746.885 503.004">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        font-size: 16px;
+      }
+
+      .cls-1, .cls-3 {
+        font-family: Avenir-Book, Avenir;
+      }
+
+      .cls-4 {
+        letter-spacing: -.01em;
+      }
+
+      .cls-5 {
+        letter-spacing: -.092em;
+      }
+
+      .cls-6 {
+        fill: #edefee;
+      }
+
+      .cls-6, .cls-7, .cls-8, .cls-9, .cls-10, .cls-11, .cls-12, .cls-13, .cls-14 {
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+
+      .cls-7 {
+        fill: #ffbfd6;
+      }
+
+      .cls-8 {
+        fill: #fff7b4;
+      }
+
+      .cls-9 {
+        fill: #b9d6ff;
+      }
+
+      .cls-10 {
+        fill: #c2ffbf;
+      }
+
+      .cls-2 {
+        font-family: SourceSerifRoman-Semibold, 'Source Serif Variable';
+        font-variation-settings: 'wght' 600;
+        font-weight: 600;
+      }
+
+      .cls-11 {
+        fill: rgba(185, 214, 255, .3);
+      }
+
+      .cls-12 {
+        fill: rgba(194, 255, 191, .3);
+      }
+
+      .cls-13 {
+        fill: rgba(255, 191, 214, .3);
+      }
+
+      .cls-3 {
+        font-size: 24px;
+      }
+
+      .cls-15 {
+        letter-spacing: -.014em;
+      }
+
+      .cls-16 {
+        letter-spacing: -.004em;
+      }
+
+      .cls-14 {
+        fill: none;
+      }
+
+      .cls-17 {
+        letter-spacing: -.022em;
+      }
+
+      .cls-18 {
+        letter-spacing: 0em;
+      }
+    </style>
+  </defs>
+  <path class="cls-13" d="m203.598,207.004H25.302c-9.307,0-16.852-7.545-16.852-16.852V49.856c0-9.307,7.545-16.852,16.852-16.852h178.296c9.307,0,16.852,7.545,16.852,16.852v140.296c0,9.307-7.545,16.852-16.852,16.852Z"/>
+  <rect class="cls-6" x="182.45" y="286.004" width="366" height="216" rx="16.852" ry="16.852"/>
+  <rect class="cls-11" x="259.45" y="33.004" width="212" height="174" rx="16.852" ry="16.852"/>
+  <rect class="cls-12" x="510.45" y="33.004" width="212" height="174" rx="16.852" ry="16.852"/>
+  <ellipse class="cls-7" cx="77.95" cy="88.504" rx="53.5" ry="42.5"/>
+  <ellipse class="cls-9" cx="177.3" cy="78.504" rx="26.149" ry="21.5"/>
+  <ellipse class="cls-10" cx="176.226" cy="162.813" rx="27.224" ry="35.191"/>
+  <ellipse class="cls-8" cx="89.226" cy="173.004" rx="32.224" ry="25"/>
+  <ellipse class="cls-9" cx="398.45" cy="96.004" rx="51" ry="46"/>
+  <ellipse class="cls-7" cx="284.726" cy="61.313" rx="7.724" ry="4.691"/>
+  <ellipse class="cls-10" cx="290.189" cy="109.198" rx="16.261" ry="13.806"/>
+  <ellipse class="cls-8" cx="346.01" cy="173.004" rx="36.44" ry="17"/>
+  <ellipse class="cls-10" cx="578.45" cy="137.504" rx="46" ry="52.5"/>
+  <ellipse class="cls-7" cx="536.51" cy="59.609" rx="3.94" ry="7.394"/>
+  <ellipse class="cls-9" cx="655.241" cy="67.052" rx="13.209" ry="16.952"/>
+  <ellipse class="cls-8" cx="670.402" cy="165.152" rx="28.048" ry="17.148"/>
+  <ellipse class="cls-8" cx="416.45" cy="444.504" rx="72" ry="35.5"/>
+  <ellipse class="cls-7" cx="330.95" cy="334.004" rx="53.5" ry="40"/>
+  <ellipse class="cls-9" cx="458.95" cy="353.004" rx="59.5" ry="46"/>
+  <ellipse class="cls-10" cx="250.45" cy="424.004" rx="60" ry="63"/>
+  <circle class="cls-7" cx="591.95" cy="325.504" r="10"/>
+  <circle class="cls-8" cx="591.95" cy="446.004" r="10"/>
+  <circle class="cls-10" cx="591.95" cy="405.837" r="10"/>
+  <circle class="cls-9" cx="591.95" cy="365.671" r="10"/>
+  <text class="cls-1" transform="translate(617.964 328.504)"><tspan x="0" y="0">Python</tspan></text>
+  <text class="cls-2" transform="translate(593.417 296.522)"><tspan x="0" y="0">Kn</tspan><tspan class="cls-16" x="20.672" y="0">o</tspan><tspan class="cls-17" x="29.52" y="0">w</tspan><tspan x="41.584" y="0">le</tspan><tspan class="cls-4" x="54.784" y="0">d</tspan><tspan class="cls-15" x="63.903" y="0">g</tspan><tspan class="cls-18" x="72.16" y="0">e</tspan></text>
+  <text class="cls-1" transform="translate(618.444 368.67)"><tspan x="0" y="0">Java</tspan></text>
+  <text class="cls-1" transform="translate(617.964 451.004)"><tspan x="0" y="0">Others</tspan></text>
+  <text class="cls-1" transform="translate(618.444 408.838)"><tspan x="0" y="0">JavaScript</tspan></text>
+  <path class="cls-14" d="m624.45,207.004v10.148c0,9.307-7.545,16.852-16.852,16.852H128.302c-9.307,0-16.852-7.545-16.852-16.852v-10.148"/>
+  <g>
+    <line class="cls-14" x1="365.45" y1="205.004" x2="365.45" y2="271.651"/>
+    <polygon points="355.477 268.733 365.45 286.004 375.422 268.733 355.477 268.733"/>
+  </g>
+  <text class="cls-3" transform="translate(0 20.496)"><tspan x="0" y="0">Python </tspan><tspan class="cls-5" x="80.903" y="0">T</tspan><tspan x="92.471" y="0">raining Data</tspan></text>
+  <text class="cls-3" transform="translate(263.092 20.496)"><tspan x="0" y="0">Java </tspan><tspan class="cls-5" x="54.72" y="0">T</tspan><tspan x="66.288" y="0">raining Data</tspan></text>
+  <text class="cls-3" transform="translate(488.697 20.496)"><tspan x="0" y="0">JavaScript </tspan><tspan class="cls-5" x="115.99" y="0">T</tspan><tspan x="127.558" y="0">raining Data</tspan></text>
+  <text class="cls-3" transform="translate(35.369 381.642)"><tspan x="0" y="0">Multilingual</tspan><tspan class="cls-5" x="-8.46" y="28.8">T</tspan><tspan x="3.108" y="28.8">raining Data</tspan></text>
+</svg>

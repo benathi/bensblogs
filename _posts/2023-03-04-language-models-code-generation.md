@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: Unreasonable Effectiveness of LLMs for Code Generation 
-date:   2023-02-04
+date:   2023-03-07
 description: 
 tags: codegeneration
 categories: transformers
@@ -57,91 +57,141 @@ _styles: >
 ---
 
 At this point, we are no longer surprised about what language models can do.
-However, it is still unclear how language models derive such amazing abilities especially in the area of code generation. This blog post outlines the experiments from [Multilingual Evaluation of Code Generation Models](https://arxiv.org/pdf/2210.14868.pdf) which give some clue as to how LLMs are so good at different code generation tasks.
+However, it is still unclear how language models derive such amazing abilities especially in the area of code generation. This blog discusses the highlights from the paper [Multilingual Evaluation of Code Generation Models](https://arxiv.org/pdf/2210.14868.pdf) which give some clue as to how LLMs are so great at coding.
 
 
 
 ## Out of Domain Generalization
-TL;DR -- If we train a model on one programming language, it turns out that such a model can also write code in a different programming language, especially when the model is large enough!  Let's look at the results and sample generations. 
+If we train a model on one programming language, it turns out that such a model can also write code in a different programming language, especially when the model is large enough!  Let's look at the results and sample generations.
+
+
+Here, we train a decoder model on three languages: Python, Java, JavaScript. We use the model to sample and generate many versions of code and evaluate with the pass@k metric. The result in Figure 1 shows that not only does it perform well on all languages that are trained on, the model also performs well on unseen languages (PHP, Ruby, Kotlin). How is this possible?
+
+
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/sampling-mbxp-4.svg"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="Figure 1: pass@k scores (accuracy) versus sampling budget k" 
+%}
+</div>
 
 
 
 
 
-
-### How is this possible?
-It turns out that the natural occurrences of code data are 
-
-
-
-{% highlight python %}
-
-"""Create a Javascript script to encode / decode for a specific encoding
-described in a file available at
-http://unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/<ENCODING>.TXT
-"""
-
-import os
-import re
-import json
-import urllib.request
-
-line_re = re.compile("^(0x[A-Z0-9]+)\s+(0x[A-Z0-9]+)*", re.M)
-
-tmpl = "http://unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/{}.TXT"
-encoding = input("Encoding name: ")
-req = urllib.request.urlopen(tmpl.format(encoding.upper()))
-data = req.read().decode("ascii")
-
-root_dir = os.path.dirname(os.path.dirname(__file__))
-libs_dir = os.path.join(root_dir, "www", "src", "libs")
-filename = os.path.join(libs_dir, f"encoding_{encoding.lower()}.js")
-with open(filename, "w", encoding="utf-8") as out:
-    out.write("var _table = [")
-    for line in data.split("\n"):
-        mo = line_re.match(line)
-        if mo:
-            key, value = mo.groups()
-            out.write(f"{key}, {value or -1},")
-    out.write("]\n")
-    out.write("var decoding_table = [],\n    encoding_table = []\n")
-    out.write("""for(var i = 0, len = _table.length; i < len; i += 2){
-var value = _table[i + 1]
-if(value !== null){
-    encoding_table[value] = _table[i]
-}
-decoding_table[_table[i]] = _table[i + 1]
-}
-$module = {encoding_table, decoding_table}
-""")
-{% endhighlight %}
+## Natural Co-Occurrences of Multi-lingual Knowledge
+It turns out that the natural occurrences of code data are quite common. Take the following code for example, which is a Python code that has JavaScript wrapped as a string at the end. 
+Overall, we hypothesize that it should be quite common to see valid multi-ligual code in a single code file, which is why models can ``generalize`` beyond the specific languages thay're trained on.
+If this is the case, then should a mono-lingual model such as a Python-only be able to write code in JavaScript? The answer is yes! (more in the next section)
 
 
 
 
 
+## Mono-lingual Models Can Generalize Too
+
+There's a lot going on in Figure 2 which shows the results for multi- and mono-lingual models across different model sizes, but let's break it down.
 
 
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/trend_vs_size_datasetall_mode-large_scale_temp0.6_passat10_grid0.svg"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="Figure 2: pass@k scores (accuracy) versus model size" 
+%}
+</div>
 
 
-## Few-Shot Prompts Teach LLMs New Languages
+* The Python model (pink) has high accuracy in Java and JavaScript evaluation, which makes sense according to the hypothesis that models can pick up knowledge of other languages embedded in the primary language's code.
+* The Java model (blue) and JavaScript model (green) seem to perform quite poorly on Python. We believe it is likely due to the lack of Python knowledge in Java/JavaScript data.
+* In the multi-lingual model where we train on Python, Java, JS, we observe the Python performance being very similar to the mono-lingual Python performance. This seems to confirm the above point that there's little Java/JS knowledge in Python data, which means that in the multi-ligual case, the Python performance will be close to that of the mono-lingual Python model.
 
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/data-spillover.svg"
+  class="img-fluid rounded z-depth-1"
+  padding="20px"
+  caption="Figure 3: Different programming language's knowledge composition in each primary's language data due to the natural occurrence of data spillover." 
+%}
+</div>
+
+## Multi-ligual versus Mono-lingual
+
+* In Figure 2, we also observe that multi-lingual models perform especially better than mono-lingual models in out-of-domain languages.
+* All these observations are consistent with the explanations in Figure 3 where the knowledge in other programming languages is aggregated across all knowledge in each language's training data.
 
 
 
 ## Zero-Shot Translation
+* We find that language models can also translate code, without being specifically trained to do so.
+* This ability extends to a mono-lingual model. For instance, a Java model can translate from Python to Java reasonably well. 
+* Java to Python is harder for translation with a Java model, since it doesn't know how to write Python well. However, it understands Python as some level and is able to use it to write a more accurate function.
+* In fact, problems that are difficult can become much easier.
+
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/translation-prompt-example.png"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="Figure 4: Example of function completion with and without translation." 
+%}
+</div>
+
+
+<div class="row mt-3">
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/translation-from-python.png"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="(a) Evaluation results on translation, illustrating that with access to reference solutions, the model can generate more correct functions compared to baseline without translations (indicated by dots)" 
+%}
+</div>
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/translation-error-analysis.png"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="(b) Tasks that are previously difficult (low solve rate for the baseline) can become easily solvable with translation.
+For each task within MBXP (MBKP in this case), we show a fraction of generations that pass the tests over the total number of samples (solve rate), where the task indices are ranked to show increasing difficulty. 
+The translation solve rate can be perfect (solve rate 1) for some tasks that originally have 0 solve rate." 
+%}
+</div>
+</div>
+
+
+
+## Few-Shot Prompts Helps LLMs on Out-of-Domain Languages
+
+* On out-of-domain languages, the performance can be improved significantly if we give the model few-shot prompts.
+
+
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/fewshot.png"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="(a) Few-shot prompting: Improvement on out-of-domain evaluation due to few-shot prompting, where the examples help guide the model to generate more correct code in the given language. 
+(b) Few-shot prompts results in lower non-assertion (compile, parsing, syntax) errors on out-of-domain (ood) evaluation but has little effect on in-domain (id), consistent with the results in (a). " 
+%}
+</div>
 
 
 
 
-
-
+<!--
+### More Code Generation Abilities
+Feel free to check out the paper on evaluation such as code-insertion, robustness, or code summarization.
+-->
 
 
 ## Evaluation Datasets
 
 
-All of the above analyses require evaluation datasets in many different programming languages. In our work [Multilingual Evaluation of Code Generation Models](https://arxiv.org/pdf/2210.14868.pdf), we outlined how we obtain such datasets via transpiling the original HumanEval and MBPP into `HumanEvalX` and `MBXP`. We also compose such datasets for different types of evaluation such as Code Insertion evaluation or Code Robustness evaluation.
+All of the above analyses require evaluation datasets in different programming languages. In our work [Multilingual Evaluation of Code Generation Models](https://arxiv.org/pdf/2210.14868.pdf), we outlined how we obtain such datasets via transpiling the original HumanEval and MBPP into `HumanEvalX` and `MBXP`. We also compose such datasets for different types of evaluation such as Code Insertion evaluation or Code Robustness evaluation.
 
 
 <div class="col-sm mt-3 mt-md-0">
@@ -149,7 +199,7 @@ All of the above analyses require evaluation datasets in many different programm
   path="assets/img/blogs/mbxp_methodology.png"
   class="img-fluid rounded z-depth-1"
   padding="0px"
-  caption="Figure 1: Evaluation Data Synthesis in 10+ Programming Languages." 
+  caption="Figure : Evaluation Data Synthesis in 10+ Programming Languages." 
 %}
 </div>
 
@@ -159,7 +209,7 @@ All of the above analyses require evaluation datasets in many different programm
   path="assets/img/blogs/mbxp_conversion_bold.png"
   class="img-fluid rounded z-depth-1"
   padding="0px"
-  caption="Figure 2: Example of Dataset Language Conversion from Python to Java." 
+  caption="Figure : Example of Dataset Language Conversion from Python to Java." 
 %}
 </div>
 
@@ -291,6 +341,50 @@ new PyString(id));
 {% endhighlight %}
 -->
 
+### Unabridged Example of Knowledge Spillover
+Below we show a full code snippet of a Python file where JS code is wrapped in a string.
+
+{% highlight python %}
+
+"""Create a Javascript script to encode / decode for a specific encoding
+described in a file available at
+http://unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/<ENCODING>.TXT
+"""
+
+import os
+import re
+import json
+import urllib.request
+
+line_re = re.compile("^(0x[A-Z0-9]+)\s+(0x[A-Z0-9]+)*", re.M)
+
+tmpl = "http://unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/{}.TXT"
+encoding = input("Encoding name: ")
+req = urllib.request.urlopen(tmpl.format(encoding.upper()))
+data = req.read().decode("ascii")
+
+root_dir = os.path.dirname(os.path.dirname(__file__))
+libs_dir = os.path.join(root_dir, "www", "src", "libs")
+filename = os.path.join(libs_dir, f"encoding_{encoding.lower()}.js")
+with open(filename, "w", encoding="utf-8") as out:
+    out.write("var _table = [")
+    for line in data.split("\n"):
+        mo = line_re.match(line)
+        if mo:
+            key, value = mo.groups()
+            out.write(f"{key}, {value or -1},")
+    out.write("]\n")
+    out.write("var decoding_table = [],\n    encoding_table = []\n")
+    out.write("""for(var i = 0, len = _table.length; i < len; i += 2){
+var value = _table[i + 1]
+if(value !== null){
+    encoding_table[value] = _table[i]
+}
+decoding_table[_table[i]] = _table[i + 1]
+}
+$module = {encoding_table, decoding_table}
+""")
+{% endhighlight %}
 
 
 
