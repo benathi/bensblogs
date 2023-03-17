@@ -5,15 +5,14 @@ date:   2023-03-07
 description: 
 tags: codegeneration
 categories: transformers
-published: false
+published: true
 social: true
 giscus_comments: true
 
 authors:
   - name: Ben Athiwaratkun 
     url: https://benathi.github.io
-#    affiliations:
-#      name: AWS AI Labs
+
 
 
 bibliography: 2018-12-22-distill.bib
@@ -25,19 +24,12 @@ bibliography: 2018-12-22-distill.bib
 #   - we may want to automate TOC generation in the future using
 #     jekyll-toc plugin (https://github.com/toshimaru/jekyll-toc).
 toc:
-#  - name: Overview
-#  - subsections:
-#    - name All-Reduce
-#  - name: High-Level Illustration
-#  - name: Attention Parallel
-#  - subsections:
-#    - name Output Parallel
-#    - name Input Parallel
-    
-#  - name: MLP Parallel
-#  #- subsections:
-#    #  - name: Context Computation
-#    #  - name: Incremental Decoding
+  - name: Out of Domain Generalization
+  - name: Natural Co-Occurrences of Multi-lingual Knowledge
+  - name: Multi-ligual versus Mono-lingual
+  - Large Large Multi-Lingual Models Really Shine
+  - name: Zero-Shot Translation
+  - name: Few-Shot Prompts Helps LLMs on Out-of-Domain Languages
 
 
 _styles: >
@@ -62,10 +54,10 @@ However, it is still unclear how language models derive such amazing abilities e
 
 
 ## Out of Domain Generalization
-If we train a model on one programming language, it turns out that such a model can also write code in a different programming language, especially when the model is large enough!  Let's look at the results and sample generations.
+If we train a model on one programming language, it turns out that such a model can also **write code in different programming languages**, especially when the model is large enough!  Let's look at the results and sample generations.
 
 
-Here, we train a decoder model on three languages: Python, Java, JavaScript. We use the model to sample and generate many versions of code and evaluate with the pass@k metric. The result in Figure 1 shows that not only does it perform well on all languages that are trained on, the model also performs well on unseen languages (PHP, Ruby, Kotlin). How is this possible?
+Here, we train a decoder model on three languages: Python, Java, JavaScript. We use the model to sample and generate many versions of code and evaluate with the pass@k metric (one can think of it as accuracies given k chances). The result in Figure 1 shows that not only does it perform well on all languages that are trained on, the model also performs well on unseen languages (PHP, Ruby, Kotlin). How is this possible?
 
 
 <div class="col-sm mt-3 mt-md-0">
@@ -82,17 +74,24 @@ Here, we train a decoder model on three languages: Python, Java, JavaScript. We 
 
 
 ## Natural Co-Occurrences of Multi-lingual Knowledge
-It turns out that the natural occurrences of code data are quite common. Take the following code for example, which is a Python code that has JavaScript wrapped as a string at the end. 
-Overall, we hypothesize that it should be quite common to see valid multi-ligual code in a single code file, which is why models can ``generalize`` beyond the specific languages thay're trained on.
-If this is the case, then should a mono-lingual model such as a Python-only be able to write code in JavaScript? The answer is yes! (more in the next section)
+It turns out that the natural occurrences of code data are quite common. Take the following code for example, which is a Python code that has JavaScript wrapped as a string.
+This piece of data counts as Python data since it parses the Python interpreter, as well as being from a `.py` file. We refer to such multi-lingual occurrences of programming languages as **knowledge spillver**. Such spillover explains why training language models on Python yields a model that can write JavaScript.
+
+The previous result shows the generalization of multi-lingual model trained on three languages. Mono-lingual models can also generalize.
 
 
 
+<div class="col-sm mt-3 mt-md-0">
+{% include figure.html
+  path="assets/img/blogs/mbxp/example-python-js-snippet.png"
+  class="img-fluid rounded z-depth-1"
+  padding="0px"
+  caption="Figure 2: JavaScript as a Python string representing cross-programming-language knowledge spillover."
+%}
+</div>
 
 
-## Mono-lingual Models Can Generalize Too
-
-There's a lot going on in Figure 2 which shows the results for multi- and mono-lingual models across different model sizes, but let's break it down.
+## Multi-ligual versus Mono-lingual
 
 
 <div class="col-sm mt-3 mt-md-0">
@@ -100,12 +99,13 @@ There's a lot going on in Figure 2 which shows the results for multi- and mono-l
   path="assets/img/blogs/mbxp/trend_vs_size_datasetall_mode-large_scale_temp0.6_passat10_grid0.svg"
   class="img-fluid rounded z-depth-1"
   padding="0px"
-  caption="Figure 2: pass@k scores (accuracy) versus model size" 
+  caption="Figure 3: pass@k scores (accuracy) versus model size" 
 %}
 </div>
 
+Figure 2 represents the results including results comparing multi- and mono-lingual models. There are a lot going on, but let's break it down.
 
-* The Python model (pink) has high accuracy in Java and JavaScript evaluation, which makes sense according to the hypothesis that models can pick up knowledge of other languages embedded in the primary language's code.
+* We observe that the Python model (pink) has high accuracy in Java and JavaScript evaluation, which makes sense according to the hypothesis that models can pick up knowledge of other languages embedded in the primary language's code.
 * The Java model (blue) and JavaScript model (green) seem to perform quite poorly on Python. We believe it is likely due to the lack of Python knowledge in Java/JavaScript data.
 * In the multi-lingual model where we train on Python, Java, JS, we observe the Python performance being very similar to the mono-lingual Python performance. This seems to confirm the above point that there's little Java/JS knowledge in Python data, which means that in the multi-ligual case, the Python performance will be close to that of the mono-lingual Python model.
 
@@ -114,15 +114,18 @@ There's a lot going on in Figure 2 which shows the results for multi- and mono-l
   path="assets/img/blogs/mbxp/data-spillover.svg"
   class="img-fluid rounded z-depth-1"
   padding="20px"
-  caption="Figure 3: Different programming language's knowledge composition in each primary's language data due to the natural occurrence of data spillover." 
+  caption="Figure 4: Different programming language's knowledge composition in each primary's language data due to the natural occurrence of data spillover." 
 %}
 </div>
 
-## Multi-ligual versus Mono-lingual
 
-* In Figure 2, we also observe that multi-lingual models perform especially better than mono-lingual models in out-of-domain languages.
-* All these observations are consistent with the explanations in Figure 3 where the knowledge in other programming languages is aggregated across all knowledge in each language's training data.
+* In Figure 3, we also observe that multi-lingual models perform especially better than mono-lingual models in out-of-domain languages.
+* All these observations are consistent with the explanations in Figure 4 where the knowledge in other programming languages is aggregated across all knowledge in each language's training data.
 
+
+## Large Multi-Lingual Models Really Shine
+* As observed in Figure 3, one can see that if the model size is large enough, the advantages of multi-lingual training is more drastic.
+* On out-of-domain evaluation, large multi-lingual models seem to break out of the log-linear trend, akin to being at a cusp of the sigmoid trend going upward, aka **emergent abilities**.
 
 
 ## Zero-Shot Translation
