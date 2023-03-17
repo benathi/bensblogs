@@ -5,7 +5,7 @@ date:   2023-03-03
 description: Estimating ChatGPT inference cost based on FLOPs.
 tags: chatgpt inference
 categories: chatgpt transformers
-published: true
+published: false
 giscus_comments: true
 
 authors:
