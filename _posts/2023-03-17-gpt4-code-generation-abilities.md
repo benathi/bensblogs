@@ -4,8 +4,8 @@ title: ChatGPT-4 on HumanEval in 10+ Languages
 date:   2023-03-17
 description: 
 tags: codegeneration
-categories: transformers
-published: false
+categories: transformers gpt4
+published: true
 social: true
 giscus_comments: true
 
@@ -44,13 +44,17 @@ _styles: >
 ---
 
 
-## How Good are ChatGPTs at Generating Code?
+## Evaluating Code Generation in 10+ Programming Languages
 
-The evaluation datasets `https://huggingface.co/datasets/mxeval/multi-humaneval` or `https://huggingface.co/datasets/mxeval/mbxp` are code completion benchmarks in 10+ programming languages. 
-
-
+After getting GPT-4 access I tested it with the code generation benchmarks ([multi-lingual humaneval](https://huggingface.co/datasets/mxeval/multi-humaneval) and [mbxp](https://huggingface.co/datasets/mxeval/mbxp)).
 
 
-## Why the Scores are Low in Some Languages?
 
 
+
+
+## Examples
+
+{% highlight javascript %}
+.......
+{% endhighlight %}
