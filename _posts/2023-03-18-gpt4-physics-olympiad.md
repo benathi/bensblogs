@@ -3,8 +3,8 @@ layout: distill
 title: ChatGPT-4 on Physics Olympiad Problems
 date:   2023-03-18
 description: 
-tags: #gpt4 #aiforscience
-categories: gpt4
+tags: gpt4 aiforscience
+# categories: 
 published: true
 social: true
 giscus_comments: true
