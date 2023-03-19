@@ -70,7 +70,7 @@ The embedded PDF viewer may not function well on mobile devices. To view the PDF
 - GPT-4 certainly understands physics concepts to some degree.
 - The weakest part, relative to my expectation, is actually the equation solving abilities.
 - Equation solving is quite deterministic so I am a bit surprised when GPT-4 output something that seems plausible but incorrect. Had it spent more time double checking and deriving the solution, I have no doubt the model would get it correct.
-- That being said, there are certain logic that are not quite correct. Is this human-level abilities however, I'd say totally!
+- That being said, there are certain logic that are not quite correct. Is this human-level abilities however? I'd say totally!
 - Another common error is a syntactic LaTex error where a newline token `//` is often produced as `/` which does not get rendered as newline. I had to do manual fixes.
 - Also, for long generation, the model often get stopped before it finishes generating everything. I need to ask the model to continue with something like `please continue starting from XXX`.
 
