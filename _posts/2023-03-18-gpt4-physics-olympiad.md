@@ -54,6 +54,7 @@ Exploring the limits of human-like language models has always been an exciting e
 **Disclaimer**: Please note that the grading process for ChatGPT's answers is subjective and based on my own standard. In line with the grading methodology used in the actual competition, partial credits will be given for correct steps towards the solution, even if the final answer is incorrect.
 
 
+The embedded PDF viewer may not function well on mobile devices. To view the PDF file, you can use the [download link]({{site.baseurl}}/assets/pdf/IPhO-2011-P1-gpt4.pdf) provided.
 
 
 
