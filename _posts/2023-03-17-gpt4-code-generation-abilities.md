@@ -219,6 +219,9 @@ https://huggingface.co/datasets/mxeval/multi-humaneval
 https://huggingface.co/datasets/mxeval/mbxp
 ```
 
+
+Part of the evaluation code used for this blog is also available in a fork of OpenAI evals `https://github.com/benathi/evals/tree/multi-humaneval-pr`. One can run the evaluation by running `oaievals multi-humaneval-js` for javascript, for example.
+
 Note that we built upon the Python-only HumanEval benchmark developed by OpenAI, as well as the MBPP benchmark created by Google, to expand the scope of evaluation to over 10 programming languages. We gratefully acknowledge the pioneering work of OpenAI and Google in this area.
 
 
