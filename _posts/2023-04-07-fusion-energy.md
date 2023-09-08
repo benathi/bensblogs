@@ -96,18 +96,29 @@ Considering this, the concept of having a dedicated reactor for the generation o
 
 
 
-<!-- 
-## How to make this fusion of D + He3 happen?
-Helion uses a magnetic field to confine the plasma. The plasma is then compressed to a very high density. This is done by using a piston-like mechanism. The plasma is then heated to a very high temperature (100 million degrees) to initiate the fusion process. The plasma is then compressed further to produce more fusion. The energy released by the fusion process is then captured via changing magnetic fields which produce electricity.
--->
+
+### How to Initiate $$ D + {}^3He $$ Fusion
+Helion uses a magnetic field to confine the plasma. The plasma is then compressed to a very high density. This is done by using a piston-like mechanism. The plasma is heated to a very high temperature and pulsed towards each other where the final temperature reaches 100 million degrees, which then initiate the fusion process. Seems like quite an engineering marvel!
+
 
 
 ### Electricity Generation in Tokemak vs Helion
 
-Tokemak captures the energy of neutron by slowing them down and generate heat. The heat is then used to create steam which rotates a turbine which then moves magnetic coils to generates electricity. Helion generates the electricity directly by capturing the energy of the proton via changing magnetic field, skipping many inefficient steps of Tokemak. This is really neat!
+Tokemak captures the energy of neutron by slowing them down and generate heat. The heat is then used to create steam which rotates a turbine which then moves magnetic coils to generates electricity. Helion generates the electricity directly by capturing the energy of the proton via changing magnetic field, skipping many steps of Tokemak. This is really neat!
 
 ## The Future of Energy
-Overall I am super excited for fusion as the next generation of clean energy. Looking forward to see the progress on the 7th generation reactor (Polaris) in 2024!
+Helion is currently developing their 7th generation reactor, named Polaris. The primary distinction from the 6th generation lies in the advanced engineering designed for a higher repetition rate and enhanced energy yield. With this iteration, the company aims to achieve net positive energy output in 2024. Exciting times! 
+
+
+<!--
+### Q&A
+
+
+Q: Can we compress the generator to be smaller which may enable a fusion generator for home use, for instance?
+A: The size is currently limited by the strenght of magnetic field. This is because to reduce the circular motion of the plasma to be of lower radius, the magnetic field needs to be stronger.
+-->
+
+
 
 References:
 
