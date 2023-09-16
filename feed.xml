@@ -1,5 +1,84 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-09-08T16:45:45-04:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
-</subtitle><entry><title type="html">Helion Fusion in a Nutshell</title><link href="https://benathi.github.io/blogs/2023-04/fusion-energy/" rel="alternate" type="text/html" title="Helion Fusion in a Nutshell" /><published>2023-04-07T00:00:00-04:00</published><updated>2023-04-07T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-04/fusion-energy</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-04/fusion-energy/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-09-16T15:38:23-04:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+</subtitle><entry><title type="html">Magnetism from Relativistic Electricity</title><link href="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/" rel="alternate" type="text/html" title="Magnetism from Relativistic Electricity" /><published>2023-04-20T00:00:00-04:00</published><updated>2023-04-20T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>In classical physics, electric and magnetic fields are seen as separate entities. That is, electric fields are present whenever there are net charges. However, once these charges start to move, we can measure another kind of force that the electric field does not account for. As illustrated in Figure 1, on the left, the charge \(q\) results in a force \(\vec{F}_E\) on a unit charge, therefore in this frame we say that there is an electric field \(\vec{E} = \vec{F}_E\). Once this charge starts to move, the force on the unit charge becomes different when the unit charge starts to move! Classically, we call this force the magnetic force (and the force per unit the magnetic field).</p>
+
+<p>In this blog, we will show that this magnetic field is a relativistic effect of the electric field.</p>
+
+<div class="col-sm mt-3 mt-md-0">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/pdf/magnetism_wire.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Figure 1: Magnetic field can be seen as a relativistic effect of the electric field.</figcaption>
+
+</figure>
+
+</div>
+
+<h3 id="magnetism-from-current-in-a-long-wire">Magnetism from Current in a Long Wire</h3>
+
+<p>First, we show a special case where we have an infinitely long wire with constant current \(I\). For simplicity, we model the current as moving positive charges with some drift velocity.</p>
+
+<p>In general, the electric field produced from a long wire with charge density \(\rho\) at a distance \(d\) is given by</p>
+
+\[\vec{E} = \frac{\rho}{2\pi\epsilon_0 d} \hat{d}\]
+
+<p>where \(\hat{d}\) is the unit vector pointing from the wire to the point of interest.</p>
+
+<p>In the frame of reference where the test charge is moving at speed \(v\), the wire is neutral, so there is no electric force acting on the test charge.</p>
+
+<p>In the second frame of reference where the test charge is at rest, we observe the positive charges at a drift velocity \(\vec{v}_+ = \vec{v}_d - \vec{v}\) and the negative charges at a drift velocity \(\vec{v}_- =  \vec{v}\). The net electric force at the test charge in this frame of reference is no longer zero due to special relativity.</p>
+
+<p>For an object moving at speed \(\vec{w}\), we observe length contraction along the direction of motion. Specifically, if the length at rest is \(L_0\), the length in the moving frame of reference becomes</p>
+
+\[L = \frac{L_0}{\gamma} &lt; L_0\]
+
+<p>where \(\gamma = \frac{1}{\sqrt{1 - \frac{w^2}{c^2}}}\).
+With length contraction, the electric field becomes different due to the different charge density, or charge per unit length. Specifically, the positive charge density becomes</p>
+
+\[\rho_+ = \rho \gamma_+ \text{ and } \rho_- = \rho \gamma_-\]
+
+<p>Therefore, the net electric force on the test charge due to the contracted positive and negative charges become</p>
+
+\[\vec{F}_+ + \vec{F}_- = \frac{\rho}{2\pi\epsilon_0 d} \hat{d} \cdot \left( \gamma_+ - \gamma_- \right)\]
+
+<p>where \(\gamma_+ = \frac{1}{\sqrt{1 - \frac{v_+^2}{c^2}}}\) and \(\gamma_- = \frac{1}{\sqrt{1 - \frac{v_-^2}{c^2}}}\).</p>
+
+<p>Now, we can expand \(\gamma_+\) and \(\gamma_-\) via Taylor series to obtain</p>
+
+<p>\(\gamma_+ - \gamma_-
+= \left( 1 - \frac{(v-v_d)}{c^2} \right)^{-1/2} -  \left( 1 - \frac{v^2}{c^2} \right)^{-1/2}\)
+which becomes 
+\(\gamma_+ - \gamma_- \approx 1 + \frac{1}{2} \frac{(v_d - v)^2}{c^2} - 1 - \frac{1}{2} \frac{v^2}{c^2} \approx - \frac{v_d v}{c^2}\)
+where we assume that the drift velocity \(v_d &lt;&lt; v\) so that $v_d^2 « v_d v$ and can be ignored. In fact, we made this assumption in the first frame of reference where we do not take the length contraction of the positive charges into account (since it is up to the squared term \(v_d^2/c^2\)).</p>
+
+<p>Now, the net force on the test charge can be written as</p>
+
+\[\vec{F}_+ + \vec{F}_- = - \frac{\rho v_d v}{2\pi\epsilon_0 c^2 d} \hat{d} = -\frac{\mu_0 I}{2 \pi d} \hat{d} \cdot v\]
+
+<p>where (1) \(v_d \rho = I\) and (2) \(c^2 = \frac{1}{\mu_0 \epsilon_0}\) and \(\mu_0\) is the permeability of free space.</p>
+
+<p>In the original frame of reference, this “mysterious” is considered as coming from magnetic force, where the magnetic field is given by $B = \frac{\mu_0 I}{2 \pi d} \hat{z}$ where $z$ is the direction going into the screen (derived by the right hand rule with respect to the current direction going to the right). Then the magnetic force on a moving test charge with velocity \(\vec{v}\) is given y \(\vec{F}_B = \vec{v} \times \vec{B}\), which is precisely \(\vec{F}_+ + \vec{F}_-\) is the test charge’s frame of reference!</p>
+
+<h4 id="notes">Notes</h4>
+<ul>
+  <li>The electric field in a long wire can be derived by integrating the electric field from the collection of infinitesimal charges along the wire and Coulomb’s law. We omit the derivation here.</li>
+  <li>Length contraction can be derived via considering a moving laser pointer and a mirror ceiling and the fact that the speed of light in any frame of reference is \(c\).</li>
+  <li>We can see that up to this point, we pretty much derive the magnetic field from first principles of electric fields and special relativity. Had special relativity be discovered first, this would perhaps be the standard way to describe the magnetic field!</li>
+  <li>It is amazing that even though the length contraction is imperceptibly small, its collective effect can produce something noticeable like the magnetic field.</li>
+</ul>
+
+<!--
+### Deriving Biot-Savart Law
+
+Now, we will derive the Biot-Savart law, which is the generalization of the magnetic field from a long wire to any current distribution. 
+
+-->]]></content><author><name>Ben Athiwaratkun</name></author><category term="physics" /><summary type="html"><![CDATA[A sketch of how magnetism arises from special relativity.]]></summary></entry><entry><title type="html">Helion Fusion in a Nutshell</title><link href="https://benathi.github.io/blogs/2023-04/fusion-energy/" rel="alternate" type="text/html" title="Helion Fusion in a Nutshell" /><published>2023-04-07T00:00:00-04:00</published><updated>2023-04-07T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-04/fusion-energy</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-04/fusion-energy/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <h3 id="what-is-fusion-energy">What is Fusion Energy</h3>
 
