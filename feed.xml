@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-09-16T15:57:56-04:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-09-25T14:44:23-04:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
 </subtitle><entry><title type="html">Magnetism from Relativistic Electricity</title><link href="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/" rel="alternate" type="text/html" title="Magnetism from Relativistic Electricity" /><published>2023-04-20T00:00:00-04:00</published><updated>2023-04-20T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p>In classical physics, electric and magnetic fields are seen as separate entities. That is, electric fields are present whenever there are net charges. However, once these charges start to move, we can measure another kind of force that the electric field does not account for. As illustrated in Figure 1, on the left, the charge \(q\) results in a force \(\vec{F}_E\) on a unit charge, therefore in this frame we say that there is an electric field \(\vec{E} = \vec{F}_E\). Once this charge starts to move, the force on the unit charge becomes different when the unit charge starts to move! Classically, we call this force the magnetic force (and the force per unit the magnetic field).</p>
@@ -55,7 +55,7 @@ With length contraction, the electric field becomes different due to the differe
 = \left( 1 - \frac{(v-v_d)}{c^2} \right)^{-1/2} -  \left( 1 - \frac{v^2}{c^2} \right)^{-1/2}\)
 which becomes 
 \(\gamma_+ - \gamma_- \approx 1 + \frac{1}{2} \frac{(v_d - v)^2}{c^2} - 1 - \frac{1}{2} \frac{v^2}{c^2} \approx - \frac{v_d v}{c^2}\)
-where we assume that the drift velocity \(v_d &lt;&lt; v\) so that $v_d^2 « v_d v$ and can be ignored. In fact, we made this assumption in the first frame of reference where we do not take the length contraction of the positive charges into account (since it is up to the squared term \(v_d^2/c^2\)).</p>
+where we assume that the drift velocity \(v_d &lt;&lt; v\) so that \(v_d^2 &lt;&lt; v_d v\) and can be ignored. In fact, we made this assumption in the first frame of reference where we do not take the length contraction of the positive charges into account (since it is up to the squared term \(v_d^2/c^2\)).</p>
 
 <p>Now, the net force on the test charge can be written as</p>
 
@@ -965,40 +965,7 @@ if(value !== null){
 decoding_table[_table[i]] = _table[i + 1]
 }
 $module = {encoding_table, decoding_table}
-</span><span class="sh">"""</span><span class="p">)</span></code></pre></figure>]]></content><author><name>Ben Athiwaratkun</name></author><category term="transformers" /><category term="codegeneration" /><summary type="html"><![CDATA[At this point, we are no longer surprised about what language models can do. However, it is still unclear how language models derive such amazing abilities especially in the area of code generation. This blog discusses the highlights from the paper Multilingual Evaluation of Code Generation Models which give some clue as to how LLMs are so great at coding.]]></summary></entry><entry><title type="html">OpenAI Still Makes 2X Profits on ChatGPT at 0.2 Cents Per 1K Tokens</title><link href="https://benathi.github.io/blogs/2023-03/openai-still-makes-2x-profits-on-chatgpt-at-02-cents-per-1k-tokens/" rel="alternate" type="text/html" title="OpenAI Still Makes 2X Profits on ChatGPT at 0.2 Cents Per 1K Tokens" /><published>2023-03-04T14:26:04-05:00</published><updated>2023-03-04T14:26:04-05:00</updated><id>https://benathi.github.io/blogs/2023-03/openai-still-makes-2x-profits-on-chatgpt-at-02-cents-per-1k-tokens</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-03/openai-still-makes-2x-profits-on-chatgpt-at-02-cents-per-1k-tokens/"><![CDATA[]]></content><author><name></name></author></entry><entry><title type="html">Lossless Tokenizer for Language Models</title><link href="https://benathi.github.io/blogs/2023-02/llm-tokenizer/" rel="alternate" type="text/html" title="Lossless Tokenizer for Language Models" /><published>2023-02-19T00:00:00-05:00</published><updated>2023-02-19T00:00:00-05:00</updated><id>https://benathi.github.io/blogs/2023-02/llm-tokenizer</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-02/llm-tokenizer/"><![CDATA[<h2 id="examples">Examples</h2>
-<ul>
-  <li>motivate with the ability of LLMs + RLHF to generalize beyond the languages of alignment data the models are trained on.</li>
-  <li>also topics like language models are multi-lingual chain of thought reasoners</li>
-  <li>How does language model handle such low-resource languages without any loss in information / unknown characters? leads to the next question</li>
-</ul>
-
-<p>OpenAI’s gpt2 tokenizer is among the first that handles tokenization in a completely lossless way, meaning that there is no unknown token whatsoever. OpenAI’s vision for generality of gpt really shines through from the tokenizer aspect.</p>
-
-<p>In this blog we will be analyzing the gpt2 which is a basis of the newly released <code class="language-plaintext highlighter-rouge">tiktoken</code> tokenizer. Towards the end of the blog, we will compare different publicly available tokenizers in terms of losslessness, compression rate, etc.</p>
-
-<h2 id="byte-level-bpe-for-lossless-tokenizer">Byte-Level BPE for Lossless Tokenizer</h2>
-<h2 id="lossless-tokenizer">Lossless Tokenizer</h2>
-
-<h3 id="base-vocabulary">Base Vocabulary</h3>
-
-<p>BPE builds a vocabulary in a bottom-up approach where it merges tokens starting the <code class="language-plaintext highlighter-rouge">base vocabulary</code>. The traditional BPE starts with a set of characters. For English, if we</p>
-
-<ul>
-  <li>
-    <p>Start from a base vocab, which could be, for example, a set of characters.</p>
-  </li>
-  <li>describe how many unicode. how many? it is also growing given emojis etc. I think.</li>
-  <li>Why character-level unicode cannot be lossless since the base vocab is very high.</li>
-  <li>This motivates Byte Level since there are only 256 bytes – we can use these as the base vocab.</li>
-</ul>
-
-<h2 id="practical-implementation">Practical Implementation</h2>
-
-<h3 id="space-prefix">Space Prefix</h3>
-
-<h3 id="pretokenization">Pretokenization</h3>
-
-<p>###</p>]]></content><author><name></name></author><category term="llms" /><category term="tokenizer" /><summary type="html"><![CDATA[Analyzing GPT Tokenizer Design]]></summary></entry><entry><title type="html">Memory IO Efficiency of Multi-Query Attention</title><link href="https://benathi.github.io/blogs/2023-02/multi-query-attention/" rel="alternate" type="text/html" title="Memory IO Efficiency of Multi-Query Attention" /><published>2023-02-01T00:00:00-05:00</published><updated>2023-02-01T00:00:00-05:00</updated><id>https://benathi.github.io/blogs/2023-02/multi-query-attention</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-02/multi-query-attention/"><![CDATA[<p>Multi-query attention was first introduced in <d-cite key="multiquery"></d-cite> and was later used in PaLM <d-cite key="palm"></d-cite> for inference efficiency. In this blog, we will analyze why multi-query can be much more efficient than the traditional multi-head attention.</p>
+</span><span class="sh">"""</span><span class="p">)</span></code></pre></figure>]]></content><author><name>Ben Athiwaratkun</name></author><category term="transformers" /><category term="codegeneration" /><summary type="html"><![CDATA[At this point, we are no longer surprised about what language models can do. However, it is still unclear how language models derive such amazing abilities especially in the area of code generation. This blog discusses the highlights from the paper Multilingual Evaluation of Code Generation Models which give some clue as to how LLMs are so great at coding.]]></summary></entry><entry><title type="html">OpenAI Still Makes 2X Profits on ChatGPT at 0.2 Cents Per 1K Tokens</title><link href="https://benathi.github.io/blogs/2023-03/openai-still-makes-2x-profits-on-chatgpt-at-02-cents-per-1k-tokens/" rel="alternate" type="text/html" title="OpenAI Still Makes 2X Profits on ChatGPT at 0.2 Cents Per 1K Tokens" /><published>2023-03-04T14:26:04-05:00</published><updated>2023-03-04T14:26:04-05:00</updated><id>https://benathi.github.io/blogs/2023-03/openai-still-makes-2x-profits-on-chatgpt-at-02-cents-per-1k-tokens</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-03/openai-still-makes-2x-profits-on-chatgpt-at-02-cents-per-1k-tokens/"><![CDATA[]]></content><author><name></name></author></entry><entry><title type="html">Memory IO Efficiency of Multi-Query Attention</title><link href="https://benathi.github.io/blogs/2023-02/multi-query-attention/" rel="alternate" type="text/html" title="Memory IO Efficiency of Multi-Query Attention" /><published>2023-02-01T00:00:00-05:00</published><updated>2023-02-01T00:00:00-05:00</updated><id>https://benathi.github.io/blogs/2023-02/multi-query-attention</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-02/multi-query-attention/"><![CDATA[<p>Multi-query attention was first introduced in <d-cite key="multiquery"></d-cite> and was later used in PaLM <d-cite key="palm"></d-cite> for inference efficiency. In this blog, we will analyze why multi-query can be much more efficient than the traditional multi-head attention.</p>
 
 <h2 id="multi-query-attention-at-a-glance">Multi-Query Attention at a Glance</h2>
 
