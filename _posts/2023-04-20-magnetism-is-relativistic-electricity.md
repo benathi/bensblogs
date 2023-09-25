@@ -109,7 +109,7 @@ which becomes
 $$
 \gamma_+ - \gamma_- \approx 1 + \frac{1}{2} \frac{(v_d - v)^2}{c^2} - 1 - \frac{1}{2} \frac{v^2}{c^2} \approx - \frac{v_d v}{c^2}
 $$
-where we assume that the drift velocity $$ v_d << v $$ so that $v_d^2 << v_d v$ and can be ignored. In fact, we made this assumption in the first frame of reference where we do not take the length contraction of the positive charges into account (since it is up to the squared term $$v_d^2/c^2$$).
+where we assume that the drift velocity $$ v_d << v $$ so that $$v_d^2 << v_d v$$ and can be ignored. In fact, we made this assumption in the first frame of reference where we do not take the length contraction of the positive charges into account (since it is up to the squared term $$v_d^2/c^2$$).
 
 
 Now, the net force on the test charge can be written as
