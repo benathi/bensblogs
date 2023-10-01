@@ -1,5 +1,150 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-09-25T14:44:23-04:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
-</subtitle><entry><title type="html">Magnetism from Relativistic Electricity</title><link href="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/" rel="alternate" type="text/html" title="Magnetism from Relativistic Electricity" /><published>2023-04-20T00:00:00-04:00</published><updated>2023-04-20T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/"><![CDATA[<h2 id="introduction">Introduction</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-09-30T22:55:20-04:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+</subtitle><entry><title type="html">Lossless Tokenizer via Byte-level BPE with Tiktoken</title><link href="https://benathi.github.io/blogs/2023-09/llm-tokenizer/" rel="alternate" type="text/html" title="Lossless Tokenizer via Byte-level BPE with Tiktoken" /><published>2023-09-30T00:00:00-04:00</published><updated>2023-09-30T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-09/llm-tokenizer</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-09/llm-tokenizer/"><![CDATA[<p>OpenAI’s gpt2 tokenizer is among the first that handles tokenization in a completely lossless way, meaning that there is no unknown token. In my opinion, OpenAI’s vision for generality of GPT really shines through from the tokenizer aspect. In this blog we will be analyzing <code class="language-plaintext highlighter-rouge">tiktoken</code> which is the tokenizer behind GPT models. 
+<!-- Towards the end of the blog, we will compare different publicly available tokenizers in terms of losslessness, compression rate, etc. --></p>
+
+<!-- ### Encoding Text To Tokens -->
+
+<p>We will describe how Tiktoken encodes a text to tokens. There are three main stages. (1) extracting out special tokens that we never want to be broken up into smaller pieces (2) pre-tokenization based on a pre-defined regular expression patterns, resembling breaking up texts into <code class="language-plaintext highlighter-rouge">words</code> (3) If such a pre-token is not an actual token, this is the stage where we use the byte-level BPE to break up the pre-token into smaller pieces.</p>
+
+<p><br /></p>
+<h4 id="pre-tokenization">Pre-Tokenization</h4>
+
+<p>Let’s look at the code that performs step (2). Note that step (1) is omitted in the educational Python tiktoken code, but it is in the Rust code <a href="https://github.com/openai/tiktoken/blob/main/src/lib.rs#L235">here</a>. Below is the Python encode function taken from <a href="https://github.com/openai/tiktoken/blob/main/tiktoken/_educational.py#L21">tiktoken</a>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">visualise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="sh">"</span><span class="s">colour</span><span class="sh">"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sh">"""</span><span class="s">Encodes a string into tokens.
+</span><span class="gp">    &gt;&gt;&gt;</span> <span class="n">enc</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">"</span><span class="s">hello world</span><span class="sh">"</span><span class="p">)</span>
+    <span class="p">[</span><span class="mi">388</span><span class="p">,</span> <span class="mi">372</span><span class="p">]</span>
+    <span class="sh">"""</span>
+    <span class="c1"># Use the regex to split the text into (approximately) words
+</span>    <span class="n">words</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">_pat</span><span class="p">.</span><span class="nf">findall</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="c1"># pre-tokens based on word boundary rules
+</span>    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+        <span class="c1"># Turn each word into tokens, using the byte pair encoding algorithm
+</span>        <span class="n">word_bytes</span> <span class="o">=</span> <span class="n">word</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">"</span><span class="s">utf-8</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">word_tokens</span> <span class="o">=</span> <span class="nf">bpe_encode</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">mergeable_ranks</span><span class="p">,</span> <span class="n">word_bytes</span><span class="p">,</span> <span class="n">visualise</span><span class="o">=</span><span class="n">visualise</span><span class="p">)</span>
+        <span class="n">tokens</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">word_tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">words</span>
+</code></pre></div></div>
+
+<p>For this encode function, a text (still in string, not bytes) is broken into <code class="language-plaintext highlighter-rouge">words</code> which we will call pre-tokens. For GPT-4 models, the tokenizer’s name is <code class="language-plaintext highlighter-rouge">cl100k_base</code>. The regular expression pattern <code class="language-plaintext highlighter-rouge">self._pat</code> is defined below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="n">tiktoken._educational</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">enc</span> <span class="o">=</span> <span class="n">SimpleBytePairEncoding</span><span class="p">.</span><span class="nf">from_tiktoken</span><span class="p">(</span><span class="sh">"</span><span class="s">cl100k_base</span><span class="sh">"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">end</span><span class="p">.</span><span class="n">_pat</span>
+<span class="n">regex</span><span class="p">.</span><span class="nc">Regex</span><span class="p">(</span><span class="sh">"</span><span class="s">(?i:</span><span class="sh">'</span><span class="s">s|</span><span class="sh">'</span><span class="s">t|</span><span class="sh">'</span><span class="s">re|</span><span class="sh">'</span><span class="s">ve|</span><span class="sh">'</span><span class="s">m|</span><span class="sh">'</span><span class="s">ll|</span><span class="sh">'</span><span class="s">d)|[^</span><span class="se">\\</span><span class="s">r</span><span class="se">\\</span><span class="s">n</span><span class="se">\\</span><span class="s">p{L}</span><span class="se">\\</span><span class="s">p{N}]?</span><span class="se">\\</span><span class="s">p{L}+|</span><span class="se">\\</span><span class="s">p{N}{1,3}| ?[^</span><span class="se">\\</span><span class="s">s</span><span class="se">\\</span><span class="s">p{L}</span><span class="se">\\</span><span class="s">p{N}]+[</span><span class="se">\\</span><span class="s">r</span><span class="se">\\</span><span class="s">n]*|</span><span class="se">\\</span><span class="s">s*[</span><span class="se">\\</span><span class="s">r</span><span class="se">\\</span><span class="s">n]+|</span><span class="se">\\</span><span class="s">s+(?!</span><span class="se">\\</span><span class="s">S)|</span><span class="se">\\</span><span class="s">s+</span><span class="sh">"</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">regex</span><span class="p">.</span><span class="n">V0</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>GPT-4’s short description of such regular expression is given below (long description <a href="https://chat.openai.com/share/68144071-d1c9-4deb-8e0f-28aba95103cc">here</a>).</p>
+
+<blockquote style="font-size: 0.9em;">
+This regex captures common contractions (like 's, 't, etc.) in a case-insensitive manner, sequences of letters possibly preceded by a non-letter, non-number character, sequences of 1 to 3 numbers, sequences of non-letter, non-number characters possibly followed by newlines, sequences of whitespace ending with newlines, whitespace not followed by non-whitespace, or any sequence of whitespace characters.
+</blockquote>
+
+<p>Let’s see some examples of how the regex breaks up text. Below, we can see that such pattern defines the rule for word boundaries such as how to separate non-whitespace and whitespace, and also imposes certain structure such as space-prefix (the use of space right before non-whitespace character such as “ x”, “ +”, “ y”).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="n">regex</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pat</span> <span class="o">=</span> <span class="n">regex</span><span class="p">.</span><span class="nf">compile</span><span class="p">(</span><span class="sa">r</span><span class="sh">"</span><span class="s">(?i:</span><span class="sh">'</span><span class="s">s|</span><span class="sh">'</span><span class="s">t|</span><span class="sh">'</span><span class="s">re|</span><span class="sh">'</span><span class="s">ve|</span><span class="sh">'</span><span class="s">m|</span><span class="sh">'</span><span class="s">ll|</span><span class="sh">'</span><span class="s">d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+</span><span class="sh">"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pat</span><span class="p">.</span><span class="nf">findall</span><span class="p">(</span><span class="sh">"</span><span class="s">hello worlddddd</span><span class="sh">"</span><span class="p">)</span>
+<span class="p">[</span><span class="sh">'</span><span class="s">hello</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s"> worlddddd</span><span class="sh">'</span><span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">pat</span><span class="p">.</span><span class="nf">findall</span><span class="p">(</span><span class="sh">"</span><span class="s">def add(x, y):</span><span class="se">\n\t</span><span class="s">return x + y</span><span class="sh">"</span><span class="p">)</span>
+<span class="p">[</span><span class="sh">'</span><span class="s">def</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s"> add</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">(x</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">,</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s"> y</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">):</span><span class="se">\n</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="se">\t</span><span class="s">return</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s"> x</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s"> +</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s"> y</span><span class="sh">'</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p><br /></p>
+<h4 id="byte-level-bpe">Byte-level BPE</h4>
+
+<div style="margin-bottom: 1em;"></div>
+
+<h5 id="base-vocabulary">Base Vocabulary</h5>
+
+<p>BPE builds a vocabulary in a bottom-up approach where it merges tokens starting with the base vocabulary. The traditional BPE starts with a set of characters. The set of all possible characters is very large, and it is growing as we speak. For example, the unicode standard has over 100,000 characters. This makes it very difficult to build a lossless tokenizer.</p>
+
+<p>However, these Unicode characters are composed of smaller elements, that is, the bytes. Since there are only 256 base bytes which can represent <em>any</em> text, we can build a lossless tokenizer where there is absolutely no unknown token. This is a neat tokenizer design that GPT was among the first to adopt (if not the first). (show huggingface implementation). Before GPT, many other models use all sorts of tricks to manage the unknown tokens such as normalization.</p>
+
+<p>Let’s see some example of the byte representation of a few Unicode characters. We can see that a normal English character such as ‘a’ is represented by a single byte. However, a Japanese character such as ‘カ’ is represented by 3 bytes. An emoji 🐱 is represented by 4 bytes.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+<span class="sa">b</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="sh">"</span><span class="s">🐱</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+<span class="sa">b</span><span class="sh">'</span><span class="se">\xf0\x9f\x90\xb1</span><span class="sh">'</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="sh">"</span><span class="s">カ</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+<span class="sa">b</span><span class="sh">'</span><span class="se">\xe3\x82\xab</span><span class="sh">'</span>
+</code></pre></div></div>
+
+<p>In Tiktoken, the 256 bytes are used as the base vocabulary. Even if the tokenizer has not observed any character or phrases before during the training stage, such phrases can be encoded by the bytes.</p>
+
+<h5 id="encoding">Encoding</h5>
+<!-- If the pre-token is not an actual token, this is the stage where we use the byte-level BPE to break up the pre-token into smaller pieces.  -->
+<p>Now, let’s investigate the <code class="language-plaintext highlighter-rouge">bpe_encode</code>  function. Each pre-token is broken up into smaller pieces using the byte-level BPE. First, the pre-token is convert into a list of bytes (<code class="language-plaintext highlighter-rouge">parts</code> in the code below). Then, for each adjacent pair of parts, we check if the pair is in the vocabulary (<code class="language-plaintext highlighter-rouge">mergeable_ranks</code>). If it is, we obtain the rank. We go through all the pairs and the adjacent pair with the smallest rank is selected to be merged. In the code below, it is enumerating through the zip of <code class="language-plaintext highlighter-rouge">parts[:-1]</code> and <code class="language-plaintext highlighter-rouge">parts[1:]</code> which essentially going through all adjacent pairs. Then, we merge the selected pair and leave other parts intact, and repeat such process again. Observe that each part can become longer than 1 byte due to the process of iteratively merging. In the end, we stop when merging is no longer possible (two adjacent parts are not in the vocabulary anymore).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">bpe_encode</span><span class="p">(</span>
+    <span class="n">mergeable_ranks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">visualise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="sh">"</span><span class="s">colour</span><span class="sh">"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="nf">bytes</span><span class="p">([</span><span class="n">b</span><span class="p">])</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">input</span><span class="p">]</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="c1"># See the intermediate merges play out!
+</span>        <span class="k">if</span> <span class="n">visualise</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">visualise</span> <span class="ow">in</span> <span class="p">[</span><span class="sh">"</span><span class="s">colour</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">color</span><span class="sh">"</span><span class="p">]:</span>
+                <span class="nf">visualise_tokens</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">visualise</span> <span class="o">==</span> <span class="sh">"</span><span class="s">simple</span><span class="sh">"</span><span class="p">:</span>
+                <span class="nf">print</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+        <span class="c1"># Iterate over all pairs and find the pair we want to merge the most
+</span>        <span class="n">min_idx</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">min_rank</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="nf">zip</span><span class="p">(</span><span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">mergeable_ranks</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">min_rank</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">rank</span> <span class="o">&lt;</span> <span class="n">min_rank</span><span class="p">):</span>
+                <span class="n">min_idx</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">min_rank</span> <span class="o">=</span> <span class="n">rank</span>
+
+        <span class="c1"># If there were no pairs we could merge, we're done!
+</span>        <span class="k">if</span> <span class="n">min_rank</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">assert</span> <span class="n">min_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+        <span class="c1"># Otherwise, merge that pair and leave the rest unchanged. Then repeat.
+</span>        <span class="n">parts</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[:</span><span class="n">min_idx</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="n">min_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">parts</span><span class="p">[</span><span class="n">min_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">parts</span><span class="p">[</span><span class="n">min_idx</span> <span class="o">+</span> <span class="mi">2</span> <span class="p">:]</span>
+
+    <span class="k">if</span> <span class="n">visualise</span><span class="p">:</span>
+        <span class="nf">print</span><span class="p">()</span>
+
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">mergeable_ranks</span><span class="p">[</span><span class="n">part</span><span class="p">]</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">tokens</span>
+</code></pre></div></div>
+
+<p>Below is and example where <code class="language-plaintext highlighter-rouge">hello worlddddd</code> is the input for encoding. From above, we see that it is splitted into two pre-tokens, <code class="language-plaintext highlighter-rouge">hello</code> and <code class="language-plaintext highlighter-rouge">worlddddd</code>, which is what we observed below where BPE works on <code class="language-plaintext highlighter-rouge">hello</code> first. Throughout the merging process, observe BPE merges the pair with lower rank first and keep building up parts. Note that the process is deterministic. Given the pre-built vocabulary and a text, the same sequence of merging will always be performed.</p>
+
+<p>Interesting, we can also see that the emoji is encoded with 3 tokens for 4 bytes (which is rather inefficient, which implies that other tokens are more important/have lower rank). The Japanese character カ however can be represented with only 1 token despite being 3 bytes. It is possible that カ appears frequently enough that it is part of the vocab itself.</p>
+
+<script src="https://gist.github.com/benathi/90fe8be8c939d0c2baf9412204bbd7a8.js"></script>
+
+<p><br /></p>
+<h3 id="training-a-bpe-tokenizer">Training a BPE Tokenizer</h3>
+
+<p>To train a BPE tokenizer (that is, to obtain a vocabulary), we iterate through a text corpus, pre-tokenize, the use the bag of words (each word or pre-token is a sequence of bytes) as our data which will be iteratively merged.</p>
+
+<p>First, we add the base bytes (all 256 bytes) to the vocabulary. Then, we iterate by counting the occurrences of each byte pair. Then, the highest frequency byte pair (<code class="language-plaintext highlighter-rouge">a</code>, <code class="language-plaintext highlighter-rouge">b</code>) is added to the vocabulary in the form of token <code class="language-plaintext highlighter-rouge">ab</code>. The data is then processed by merging any occurrences of adjacent <code class="language-plaintext highlighter-rouge">a</code>, <code class="language-plaintext highlighter-rouge">b</code> to be <code class="language-plaintext highlighter-rouge">ab</code>. That wat, at each stage, all the parts are in the vocabulary. We repeat until the size of the vocabulary reaches the desired size.</p>
+
+<p><br /></p>
+
+<hr />
+
+<p><br /></p>
+
+<h1 id="appendix">Appendix</h1>
+<p>We show the modified educational tiktoken code here.
+<br />
+<script src="https://gist.github.com/benathi/5e41cf34617196a65fd1837d1aa07c96.js#L21-L29"></script></p>
+
+<!-- 
+## Implications
+- Recently we have observed the ability of LLMs + RLHF to generalize beyond the English data they are trained on. LLMs also have abilties such as multi-lingual chain of thought reasoning where a chain of thought in English generalizes to other languages.
+- How does language model handle such low-resource languages without any loss in information despite the tokenizer having only 50K - 100K vabulary size? One crucial aspect is the losslessness of tokenizer.
+-->]]></content><author><name></name></author><category term="llms" /><category term="tokenizer" /><summary type="html"><![CDATA[The design of Tiktoken, a byte-level BPE tokenizer behing GPT.]]></summary></entry><entry><title type="html">Magnetism from Relativistic Electricity</title><link href="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/" rel="alternate" type="text/html" title="Magnetism from Relativistic Electricity" /><published>2023-04-20T00:00:00-04:00</published><updated>2023-04-20T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-04/magnetism-is-relativistic-electricity/"><![CDATA[<h2 id="introduction">Introduction</h2>
 
 <p>In classical physics, electric and magnetic fields are seen as separate entities. That is, electric fields are present whenever there are net charges. However, once these charges start to move, we can measure another kind of force that the electric field does not account for. As illustrated in Figure 1, on the left, the charge \(q\) results in a force \(\vec{F}_E\) on a unit charge, therefore in this frame we say that there is an electric field \(\vec{E} = \vec{F}_E\). Once this charge starts to move, the force on the unit charge becomes different when the unit charge starts to move! Classically, we call this force the magnetic force (and the force per unit the magnetic field).</p>
 
