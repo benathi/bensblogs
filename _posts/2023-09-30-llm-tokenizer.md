@@ -174,3 +174,28 @@ We show the modified educational tiktoken code here.
 - Recently we have observed the ability of LLMs + RLHF to generalize beyond the English data they are trained on. LLMs also have abilties such as multi-lingual chain of thought reasoning where a chain of thought in English generalizes to other languages.
 - How does language model handle such low-resource languages without any loss in information despite the tokenizer having only 50K - 100K vabulary size? One crucial aspect is the losslessness of tokenizer.
 -->
+
+<!--
+Next, sketch out thoughts on why we don't have to stop at bigram. we can do n-gram in general (fusion token). 
+
+Also what if we change the pre-tokenization patterns. 
+
+Also what if we do fusion cross the pre token boundaries. would it lead to problems? in terms of compression, no, but it can lead to learning problems for neural nets.
+
+Can we probe / do understanding on how LLMs interact with pre-tokenization patterns? What if we do random ish pre-tokenization patterns? Would it be hard for LLMs to learn?
+
+
+What would be better is to use Illustrator to draw, just like in my other posts.
+
+
+Other FAQs
+- the merge is described in terms of vocab directly? is it possible that different merges will result in the same vocab? would it lead to any problems? based on the deterministic nature via rank, it should be fine. for example, could abc come from ab,c and a,bc ?
+
+
+complexity of n-gram instead of pairs.
+for adjacent pairs corresponding to n parts, we loop through n-1 pairs. if we do m-gram, then we loop thorough n-1 pairs, n-2 3-grams, n-3 4-grams, etc. so it is O(n^2) in terms of number of parts. But this should be quite fast really, in my opinion.
+
+
+The biggest bottleneck is to break the pre-tokenization pattern a bit I think.
+
+-->
