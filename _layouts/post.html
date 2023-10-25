@@ -41,6 +41,7 @@ layout: default
 
   <article class="post-content">
     {{ content }}
+    <!-- {{ content | toc }} does not work here -->
   </article>
 
   {%- if site.disqus_shortname and page.disqus_comments -%}
