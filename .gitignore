@@ -9,3 +9,13 @@ _site
 Gemfile.lock
 vendor
 
+.aider.chat.history.md
+.aider.ident.cache.v1/cache.db
+.aider.tags.cache.v1/cache.db
+.idea/aws.xml
+.idea/bensblogs.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
