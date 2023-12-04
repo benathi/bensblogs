@@ -1,31 +1,78 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-12-03T22:14:47-05:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
-</subtitle><entry><title type="html">The Illustrated Long Convolution Models</title><link href="https://benathi.github.io/blogs/2023-10/long-convolution-models/" rel="alternate" type="text/html" title="The Illustrated Long Convolution Models" /><published>2023-10-15T00:00:00-04:00</published><updated>2023-10-15T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-10/long-convolution-models</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-10/long-convolution-models/"><![CDATA[<p>There are recent exciting developments of AI models for sub-quadratic long context modeling involving the use of convolutions, ranging from Structured State Space Models (S4) <a class="citation" href="#s4">(Gu et al., 2022)</a> <a class="citation" href="#s4d">(Gupta et al., 2022)</a>, Gated State Spaces (GSS) <a class="citation" href="#gss">(Mehta et al., 2023)</a>, H3 <a class="citation" href="#h3">(Fu et al., 2023)</a>, and most recently, Hyena model <a class="citation" href="#hyena">(Poli et al., 2023)</a>. In this blog, we will seek to develop intuition behind these models with some illustrations.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://benathi.github.io/blogs/feed.xml" rel="self" type="application/atom+xml" /><link href="https://benathi.github.io/blogs/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-12-03T22:31:09-05:00</updated><id>https://benathi.github.io/blogs/feed.xml</id><title type="html">AI Bytes</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+</subtitle><entry><title type="html">The Essense of Global Convolution Models</title><link href="https://benathi.github.io/blogs/2023-12/global-convolution-models/" rel="alternate" type="text/html" title="The Essense of Global Convolution Models" /><published>2023-12-03T00:00:00-05:00</published><updated>2023-12-03T00:00:00-05:00</updated><id>https://benathi.github.io/blogs/2023-12/global-convolution-models</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-12/global-convolution-models/"><![CDATA[<p>There are recent exciting developments of AI models for sub-quadratic long context modeling involving the use of global convolutions, ranging from Structured State Space Models (S4) <a class="citation" href="#s4">(Gu et al., 2022)</a> <a class="citation" href="#s4d">(Gu et al., 2022)</a>, Gated State Spaces (GSS) <a class="citation" href="#gss">(Mehta et al., 2023)</a>, H3 <a class="citation" href="#h3">(Fu et al., 2023)</a>, and most recently, Hyena models <a class="citation" href="#hyena">(Poli et al., 2023; Nguyen et al., 2023)</a>.  In this blog post, we will attempt to provide a unified perspective on these models and show how they are related to each other. We will also provide a background on necessary topics, including convolution, fast fourier transform, state space models, and attention.</p>
 
-<!-- We will aim for this blog post to be as accessible as possible, which means we will trade mathematical rigor for intuitive explanation and may omit some details related to the convergence conditions etc. (after all, if you want mathematical regor, the corresponding original papers also do a great job).
+<h2 id="prelude">Prelude</h2>
+
+<p>Throughout this blog post, the common goal is to understand how various models define <strong>context operators</strong>. In the single feature dimension case, given a sequence \(\{ u_i \}_{i=0}^{L}, u_i \in \mathbb{R}\)<sup id="fnref:single_input_single_output" role="doc-noteref"><a href="#fn:single_input_single_output" class="footnote" rel="footnote">1</a></sup>, we are interested in effective ways to build a contextualized representation \(y_j \in \mathbb{R}\) that captures the context \(\{u_i\}_{i=0}^j\), which is the input up to time \(j\). A good context representation \(y_j\) can have significant implications. For instance, it can allow us to predict the next time step more accurately, which is useful for various tasks such as forecasting or language modeling.</p>
+
+<div class="col-sm-1 mt-3 mt-md-1" style="max-width: 50%; margin-left: auto; margin-right: auto;">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/intro-operator.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Context Operator.</figcaption>
+
+</figure>
+
+</div>
+
+<!--
+Questions:
+
+We are compressing the history into one number which is a bit unrealistic in a way.
+
+We should be compressing the history (each element is a vector)
+into a vector -- this would be much better in my opinion.
+
+The high dimensional feature plays quite a role here.
 -->
+
+<p>Attention <a class="citation" href="#attention">(Vaswani et al., 2017)</a>, for instance, is a popular context operator where \(y_j\) is a weighted sum of the input sequence \(\{u_i\}_{i=0}^j\), based on an input-dependent weight \(A_{ij}\) computed from softmax over dot product between each token and every other tokens in the past. In a vector form, we can also view attention as \(\vec{y} = A \vec{u}\). In general, an context operator can be of any form \(\vec{y} = f(\vec{u})\) where \(f\) is a function. In this blog post, we will see a global convolution operator can be an effective operator \(f\), which builds contextual representation in a global way by aggregating information from all input positions. This is in contrast to short or local convolution where the kernel is of fixed length, popular in convolutional neural networks. The global convolution kernel can also depend on data itself, giving rise of implicit convolution kernels.
+<!--
+The global convolution can either involve explicit convolution kernels, or implicit ones (data-dependent).
+--></p>
+
+<!--
+FIGURE: Operator learning
+-->
+
+<!--
+A global convolution means that the convolution operation aggregates information all input positions of arbitrary length, in contrast to local convolutions popular in convolutional nueral networks.
+-->
+
+<h2 id="notation">Notation</h2>
+<p>We use the following notations throughout the blog post:</p>
+
+<ul>
+  <li>We interchangeably think of different points along the sequence as time or spatial dimension. For instance, we can think of \(u_i\) as the input at time \(i\) or the input at position \(i\).</li>
+  <li>We use \(T\), \(L\), or sometimes \(N\) to denote the sequence length.</li>
+  <li>\(\odot\) represents either element-wise multiplication or einstein summation when appropriate.</li>
+  <li>\(\mathbf{a} * \mathbf{b}\) denotes the convolution of two vectors \(\mathbf{a}\) and \(\mathbf{b}\). In this post, we primarily deal typically deal with convolution of equal length vectors.</li>
+  <li>We either use boldface \(\mathbf{a}\) or \(\vec{a}\) to denote a vector.
+<!--
+ (when we want to emphasize that $$a$$ is a vector for clarity).
+--></li>
+</ul>
 
 <h1 id="background">Background</h1>
 
-<p>The goal for this post is to be as self-contained as possible, meaning that we will cover a lot of necessary background to deeply understand related convolution models and how they compare and connect with transformer’s attention. For instance, we cover the core idea and derivation of convolution theorem and fast fourier transform (FFT), which is at the heart of being able to do long range model with only sub-quadratic computation complexity. We provide background section on orthonomal basis in function space, which will be important to understand the construction of Hippo matrix for long range modeling with state space models. We will also cover einstein summation, as it provides a convenient way to tie different operations together under general (linear) tensor operations and is used throughout the blog post.</p>
+<p>The goal for this blog post is to be self-contained and accessible to the broader audience. We will cover background necessary to deeply understand related convolution models and how they compare and connect with transformer’s attention. For instance, we cover the core idea and derivation of convolution theorem and Fast Fourier Transform (FFT), which is at the heart of being able to do long range model with log linear computation. We provide background section on orthonomal basis in function space, which will be important to understand the construction of HiPPO matrix for continuous-time input memorization problem with state space models. We will also cover einstein summation, as it provides a convenient way to tie different operations together under general (linear) tensor operations and is used throughout the blog post. We will also briefly cover transformers attention and its linear version, which provides connection to RNNs and the recurrence nature of state space models.</p>
 
-<p>If you are already familiar with certain topics, feel free to skip. Below outlines the recommended background for each of the convolution models so that you can decide what to focus on.</p>
+<p>If you are already familiar with certain topics, feel free to skip. Below outlines the recommended background for each of the convolution models so that one can decide what to focus on.</p>
 
 <ul>
-  <li>Hippo Matrix: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a>, <a href="#b-orthonormal-basis-in-function-space">B</a>, <a href="#c-state-space-models">C</a></li>
-  <li>S4: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a> and <a href="#c-state-space-models">C</a> and understanding of <a href="#hippo-matrix-for-history-representation-via-state-space-models">Hippo matrix</a></li>
-  <li>H3: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a>, C and understanding of <a href="#hippo-matrix-for-history-representation-via-state-space-models">Hippo matrix</a> and <a href="#s4-structured-state-space">S4</a></li>
+  <li>HiPPO Framework: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a>, <a href="#b-orthonormal-basis-in-function-space">B</a>, <a href="#c-state-space-models">C</a></li>
+  <li>S4: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a> and <a href="#c-state-space-models">C</a> and understanding of <a href="#hippo-matrix-for-history-representation-via-state-space-models">HiPPO framework</a></li>
+  <li>H3: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a>, <a href="#c-state-space-models">C</a> and understanding of <a href="#hippo-matrix-for-history-representation-via-state-space-models">HiPPO matrix</a> and <a href="#s4-structured-state-space">S4</a></li>
   <li>Hyena: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a>. All background topics recommended.</li>
-  <li>Unified perspective: requires background <a href="#a-convolution-and-fast-fourier-transform">A</a>, [D] [E]. All background topics recommended.</li>
 </ul>
 
 <!--
-
-## A: Convolution and Fast Fourier Transform
-## B: Orthonormal Basis in Function Space
-## C: State Space Models
-## D: Einstein Summation for General Tensor Operations
-## E: Attention and Linear Attention
-
+* Unified perspective: requires background [A](#a-convolution-and-fast-fourier-transform), [D](#d-einstein-summation-for-general-tensor-operations) [E](#e-attention-and-linear-attention). All background topics recommended.
 -->
 
 <!--
@@ -35,24 +82,30 @@
   and also the rendering of title is broken
   -->
 
-<h2 id="a-convolution-and-fast-fourier-transform">A. Convolution and Fast Fourier Transform</h2>
+<h2 id="a-convolution-theorem-and-fast-fourier-transform">A. Convolution Theorem and Fast Fourier Transform</h2>
 
+<p>In this section, we will cover the following topics:</p>
 <ul>
-  <li>introduce the concept of convolution and show the illustration.</li>
-  <li>tie to the probability distribution interpretation: the density of X + Y is the convolution of the density of X and Y.</li>
-  <li>Give intuition in terms of getting contribution from both the signal and the convolution kernel.</li>
+  <li>The concept of convolution, including some illustration and  examples of convolution such as the probability distribution interpretation: the density of random variables \(X + Y\) is the convolution of the density \(p_X\) and \(p_Y\).</li>
+  <li>Discrete Fourier transform as a way to convert time-domain signal to frequency domain signal, and vice versa.</li>
+  <li>Fast Fourier transform as a way to compute the Discrete Fourier transform efficiently.</li>
+  <li>Convolution theorem, which states that convolution in time domain is equivalent to multiplication in frequency domain.</li>
 </ul>
 
 <h3 id="what-is-a-convolution">What is a Convolution?</h3>
-<!-- ##  and $$\mathbf{b} \in \mathbb{R}^M$$ -->
 
-<p>Let us consider two N-dimensional vectors \(\mathbf{a}, \mathbf{b} \in \mathbb{R}^N\). The convolution of the two vectors, denoted as \(\mathbf{a} * \mathbf{b}\) is defined as:</p>
+<p>Let us consider two N-dimensional vectors \(\mathbf{a}, \mathbf{b} \in \mathbb{R}^N\)<sup id="fnref:vector-sizes" role="doc-noteref"><a href="#fn:vector-sizes" class="footnote" rel="footnote">2</a></sup>. The convolution of the two vectors, denoted as \(\mathbf{a} * \mathbf{b}\) is defined as:</p>
 
 \[\begin{align*}
-\mathbf{c}_i = (\mathbf{a} * \mathbf{b})_i &amp;= \sum_{n=0}^{N-1} a_n b_{i-n} \\
+c_i = (\mathbf{a} * \mathbf{b})_m &amp;= \sum_{n=0}^{N-1} a_n b_{m-n} \\
 \end{align*}\]
 
-<!-- &= \sum_{n=0}^{N-1} a_{i-n} b_n -->
+<p>In this notation, we implicitly assume that \(a_n\) or \(b_n\) where \(n \not \in \{0, \dots, N-1\}\) is undefined and is treated as \(0\).</p>
+
+<h4 id="high-level-intuition">High-Level Intuition</h4>
+
+<p>We can see convolution as a way to combine two signals. The first signal is the convolution kernel \(\mathbf{a}\) and the second signal is the input signal \(\mathbf{b}\) (or vice versa since the operation is commutative). The approach of combining signals in convolution is such that for <strong>the output \({c}_m\) gather signals from all input pairs \(\{a_{m-n}, b_m\}\) whose indicies add up to \(m\) exactly</strong>.</p>
+
 <p>To make it more concrete, let’s expand this out with \(N=4\).</p>
 
 \[\begin{align*}
@@ -65,12 +118,28 @@ c_5 &amp;= a_2 b_3 + a_3 b_2 \\
 c_6 &amp;= a_3 b_3 \\
 \end{align*}\]
 
-<p>where we note that \(a_j\) or \(b_j\) is undefined outside \(j \in \{0, \dots, N-1 \}\), so we can think of such invalid terms as zero.</p>
+<p>where we note that \(a_j\) or \(b_j\) are treated as \(0\) for \(j \not \in \{0, \dots, N-1 \}\). 
+We can see that, for instance, \(c_2\) is the sum of \(a_0 b_2\) and \(a_1 b_1\) and \(a_2 b_0\), where the indicies add up to \(2\).</p>
 
-<p>We can also write \(\mathbf{c}\) as a matrix multiplication:</p>
+<div class="col-sm mt-3 mt-md-1">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/convolution_info_aggregate.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Convolution as a way to aggregate information from inputs.</figcaption>
+
+</figure>
+
+</div>
+
+<p>We can also write convolution as a matrix multiplication:</p>
 
 \[\mathbf{c} = 
-\begin{bmatrix}
+\begin{pmatrix}
 c_0 \\
 c_1 \\
 c_2 \\
@@ -78,9 +147,9 @@ c_3 \\
 c_4 \\
 c_5 \\
 c_6 \\
-\end{bmatrix}
+\end{pmatrix}
 =
-\begin{bmatrix}
+\begin{pmatrix}
 a_0 &amp; 0 &amp; 0 &amp; 0 \\
 a_1 &amp; a_0 &amp; 0 &amp; 0 \\
 a_2 &amp; a_1 &amp; a_0 &amp; 0 \\
@@ -88,112 +157,129 @@ a_3 &amp; a_2 &amp; a_1 &amp; a_0 \\
 0 &amp; a_3 &amp; a_2 &amp; a_1 \\
 0 &amp; 0 &amp; a_3 &amp; a_2 \\
 0 &amp; 0 &amp; 0 &amp; a_3 \\
-\end{bmatrix}
-\begin{bmatrix}
+\end{pmatrix}
+\begin{pmatrix}
 b_0 \\
 b_1 \\
 b_2 \\
 b_3 \\
-\end{bmatrix}
+\end{pmatrix}
 \tag{Convolution}\]
 
-<p>The convolution of two vectors can be then written in matrix multiplication term as</p>
+<p>or</p>
 
 \[\mathbf{c} = S_a \mathbf{b}\]
 
-<p>where \(S_a\) is the matrix representation of vector \(\mathbf{a}\). 
-We observe that \(S_a\) is Toeplitz<sup id="fnref:toeplitz" role="doc-noteref"><a href="#fn:toeplitz" class="footnote" rel="footnote">1</a></sup>, meaning that it each diagonal values from left to right are constant. 
-The convolution operator is also commutative, meaning that \(\mathbf{a} * \mathbf{b} = \mathbf{b} * \mathbf{a}\), or in matrix term, \(\mathbf{c} = S_a \mathbf{b} = S_b \mathbf{a}\) where \(S_b\) is the convolution matrix representation of vector \(\mathbf{b}\).</p>
+<p>where \(S_a\) is the convolution matrix representation of vector \(\mathbf{a}\). 
+We observe that \(S_a\) is Toeplitz<sup id="fnref:toeplitz" role="doc-noteref"><a href="#fn:toeplitz" class="footnote" rel="footnote">3</a></sup>, meaning that it each diagonal has constant values from left to right. 
+Since the convolution operator is commutative (\(\mathbf{a} * \mathbf{b} = \mathbf{b} * \mathbf{a}\)), we also have \(\mathbf{c} = S_b \mathbf{a}\) where \(S_b\) is the convolution matrix representation of vector \(\mathbf{b}\).</p>
 
-<!--
-In many cases, we use convolutions as a way to process signals that depends on time or positions, so it is common that we use the **causal** convolution[^causal-convolution] where the resulting signal $$c_i$$ can never depend on future time steps $$ n > i$$. That is, the causal convolution becomes:
+<div class="col-sm mt-3 mt-md-1">
+<figure style="background-color: white;">
 
-$$
-\begin{align*}
-\mathbf{c}_i = (\mathbf{a} * \mathbf{b})_i &= \sum_{n=0}^{i} a_n b_{i-n} \\
-\end{align*}
-$$
+  <picture>
+    
 
-For $$N=4$$, 
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/conv_kernel_and_matrix_rep.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
-$$
-\begin{align*}
-c_0 &= a_0 b_0 \\
-c_1 &= a_0 b_1 + a_1 b_0 \\
-c_2 &= a_0 b_2 + a_1 b_1 + a_2 b_0 \\
-c_3 &= a_0 b_3 + a_1 b_2 + a_2 b_1 + a_3 b_0 \\
-\end{align*}
-$$
+  </picture><figcaption class="caption">Convolution kernel and its matrix representation.</figcaption>
 
-In the matrix form, this corresponds to a truncated or causal version of the Toeplitz matrix representation:
+</figure>
 
-$$
-\mathbf{c} =
-\begin{bmatrix}
-c_0 \\
-c_1 \\
-c_2 \\
-c_3 \\
-\end{bmatrix}
-=
-\begin{bmatrix}
-a_0 & 0 & 0 & 0 \\
-a_1 & a_0 & 0 & 0 \\
-a_2 & a_1 & a_0 & 0 \\
-a_3 & a_2 & a_1 & a_0 \\
-\end{bmatrix}
-\begin{bmatrix}
-b_0 \\
-b_1 \\
-b_2 \\
-b_3 \\
-\end{bmatrix}
-\tag{Causal Convolution}
-$$
+</div>
 
+<p>I included a Colab notebook to visualize the kernel and its matrix representation <a href="https://colab.research.google.com/drive/1apAS64tXTBMbuMI0AOUWyVOuk5_9C_vh?usp=sharing">here</a>.</p>
 
-BenA: if we assume that outside the defined indices, the values of a_n and b_n are zero, then any convolution is already a causal convolution since the signal from a_n where n > i that contributes to c_i will multiply with b_{i-n} which is zero.
+<h4 id="causal-vs-non-causal-convolution">Causal vs Non-Causal Convolution</h4>
 
--->
+<p>Let’s take a look in the case where \(a_n\) have non-zero values where \(n &lt; 0\). Again, let’s use \(N=4\) for simplicity.</p>
 
-<h4 id="high-level-intuition">High-Level Intuition</h4>
+\[\begin{align*}
+c_0 &amp;= a_{-4} b_0 + a_{-3} b_1 + a_{-2} b_2 + a_{-1} b_1 + \textcolor{red}{a_0 b_0} + a_1 b_{-1} + a_2 b_{-2} + a_3 b_{-3} \\
+c_1 &amp;= a_{-4} b_1 + a_{-3} b_2 + a_{-2} b_3 + a_{-1} b_2 + \textcolor{red}{a_0 b_1} + \textcolor{red}{a_1 b_0} + a_2 b_{-1} + a_3 b_{-2} \\
+c_2 &amp;= a_{-4} b_2 + a_{-3} b_3 + a_{-2} b_4 + a_{-1} b_3 + \textcolor{red}{a_0 b_2} + \textcolor{red}{a_1 b_1} + \textcolor{red}{a_2 b_0} + a_3 b_{-1} \\ 
+ \vdots &amp; 
+\end{align*}\]
 
-<p>We can see convolution as a way to combine two signals. The first signal is the convolution kernel \(\mathbf{a}\) and the second signal is the input signal \(\mathbf{b}\). The combination is such that for the output \(\mathbb{c}_i\) gather signals from indicies that add up to \(i\) exactly. For instance, \(c_2\) is the sum of \(a_0 b_2\) and \(a_1 b_1\) and \(a_2 b_0\), where the indicies add up to \(2\) exactly.</p>
+<p>Observe that if \(a_{n} \ne 0\) for \(n &lt; 0\), then, for example, \(c_2\) gets the contribution from \(a_{-3}b_{3}\) where \(b_3\) is an input signal from a future time step. If we would like to perform causal modeling where the output of the current time step is influenced only by current and previous time steps (and not future steps), all \(a_n\) for \(n &lt; 0\) must be \(0\).</p>
 
-<p>Observe that due to how we index the inputs where \(a_{n} = 0\) for \(n &lt; 0\) results in the convolution being <strong>causal</strong>, which means that the signal \(c_i\) can only depend on input at time \(i\) or before. This is because if there is a term \(b_{i+m}\) for \(m&gt;0\) that contributes to \(c_i\), the corresponding term from \(\mathbb{a}\) is \(a_{-m}\) which is zero. However, if we do not index the inputs this way, then the convolution may not be causal and the output signal can depend on future inputs unless explicitly handled.</p>
+<p>In general, due to how we index the inputs where \(a_{n} = 0\) for \(n &lt; 0\) in the original definition, this results in the convolution being <strong>causal</strong>, which means that the signal \(c_i\) can only depend on input at time \(i\) or before. This is because if there is a term \(b_{i+m}\) for \(m&gt;0\) that contributes to \(c_i\), the corresponding term from \(\mathbf{a}\) is \(a_{-m}\) which is zero (which makes \(b_{i+m}a_{-m} = 0\)).</p>
 
-<p>In many cases, we are interested in mapping an input signal \(b(t)\) to and output \(c(t)\) on the same time domain \(t = 0, \dots, T-1\), in which case we can use the truncated version where the corresponding Toeplitz matrix is square and is lower diagonal.</p>
+<p>In addition, throughout this blog post, we are mainly interested in mapping an input signal \(\mathbf{b}\) to and output \(\mathbf{c}\) on the same time domain \(t = 0, \dots, T-1\), in which case we can use the truncated version where \(c_m\) are only defined for \(m \in \{0, \dots, T-1\}\), implying that the corresponding Toeplitz matrix is square and is lower diagonal.</p>
 
 \[\mathbf{c} =
-\begin{bmatrix}
+\begin{pmatrix}
 c_0 \\
 c_1 \\
 c_2 \\
 c_3 \\
-\end{bmatrix}
+\end{pmatrix}
 =
-\begin{bmatrix}
+\begin{pmatrix}
 a_0 &amp; 0 &amp; 0 &amp; 0 \\
 a_1 &amp; a_0 &amp; 0 &amp; 0 \\
 a_2 &amp; a_1 &amp; a_0 &amp; 0 \\
 a_3 &amp; a_2 &amp; a_1 &amp; a_0 \\
-\end{bmatrix}
-\begin{bmatrix}
+\end{pmatrix}
+\begin{pmatrix}
 b_0 \\
 b_1 \\
 b_2 \\
 b_3 \\
-\end{bmatrix}\]
+\end{pmatrix}\]
 
-<h4 id="continuous-case-of-convolution">Continuous Case of Convolution</h4>
+<h5 id="examples-of-convolution">Examples of Convolution</h5>
 
-<p>The convolution of two functions \(f\) and \(g\) is defined as:</p>
+<p>We look at a few cases of convolution to develop some intuition. First, let’s consider random variables \(X\) and \(Y\) corresponding to rolling two dice. The probability distribution of \(X\) (or \(Y\)) are:</p>
+
+\[\begin{align*}
+p_X(x) &amp;=
+\begin{cases}
+\frac{1}{6} &amp; x \in \{1, 2, 3, 4, 5, 6\} \\
+0 &amp; \text{otherwise}
+\end{cases}
+\end{align*}\]
+
+<p>The probability distribution of \(Z = X + Y\) requires summing over all possible combinations of \(X=x\) and \(Y=y\) such that \(x+y = z\). That is, if \(X=x\), \(Y\) must be \(y=z-x\). Therefore, the probability distribution of \(Z\) is exactly the convolution between \(p_X\) and \(p_Y\):</p>
+
+\[\begin{align*}
+p_Z(z) &amp;= \sum_{x=1}^6 p_X(x) p_Y(z-x) \\
+       &amp;= p_X * p_Y
+\end{align*}\]
+
+<p>This is one of examples where convolution shows up quite natarually when we deal of probability. Below, we show the illustration of the convolution results, for both a fair die scenario and an unfair one.</p>
+
+<div class="col-sm-1 mt-3 mt-md-1" style="max-width: 50%; margin-left: auto; margin-right: auto;">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/conv_result.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Convolution examples.</figcaption>
+
+</figure>
+
+</div>
+
+<h4 id="extras-convolution-of-functions">Extras: Convolution of Functions</h4>
+
+<p>The convolution of two functions \(f\) and \(g\) is the continuous case of the discrete version and is defined as:</p>
 
 \[(f * g)(t) = \int_{-\infty}^{\infty} f(\tau) g(t - \tau) d\tau\]
 
-<p>Let’s try to develop an understanding to see what this really means. To do this, we start with an example from probability where we have two random variables \(X\) and \(Y\) with probability density functions \(f\) and \(g\) respectively. The convolution of \(f\) and \(g\) is the probability density function of the sum of \(X\) and \(Y\), that is, \(f * g\) is the probability density function of \(X + Y\).</p>
+<p>Similar to the discrete case, if we have two random variables \(X\) and \(Y\) with probability density functions \(P_X\) and \(P_Y\) respectively, then the probability density of \(Z = X + Y\) entails integrating all possible \(X=x\) and \(Y=y\) such that \(x+y = z\). That is, if \(X=x\), \(Y\) must be \(y=z-x\). Therefore, the probability density of \(Z\) is:</p>
 
-<p>To do this, we start with a simple example of a convolution of two functions, one of which is a Dirac delta function. The Dirac delta function is defined as:</p>
+\[\begin{align*}
+p_Z(z) &amp;= \int_{-\infty}^\infty p_X(x) p_Y(z-x) dx \\
+\end{align*}\]
+
+<p>which is the exactly the convolution \(p_X * p_Y\).</p>
+
+<p>Another example entails a convolution of a function and a Dirac delta. The Dirac delta function is defined as:</p>
 
 \[\delta(t) =
 \begin{cases}
@@ -205,16 +291,16 @@ b_3 \\
 
 \[\int_{-\infty}^{\infty} \delta(t) dt = 1\]
 
-<p>The Dirac delta function is a special function that is zero everywhere except at \(t=0\), where it is infinite. However, the integral of the function is 1. This is a special function that is useful in many areas of mathematics, including probability theory and signal processing. In fact, the Dirac delta function can be thought of as a probability distribution that is concentrated at \(t=0\).</p>
+<p>The Dirac delta function is a special function that is zero everywhere<sup id="fnref:relatively-zero" role="doc-noteref"><a href="#fn:relatively-zero" class="footnote" rel="footnote">4</a></sup> except at \(t=0\), where it is infinite. However, the integral of the function is \(1\), which implies that we can think of Dirac delta function can be thought of as a probability distribution that is entirely concentrated at \(t=0\).</p>
 
-<p>Now, let’s consider the convolution of the Dirac delta function with another function \(f\):</p>
+<p>Next, let’s consider the convolution of the Dirac delta function with another function \(f\):</p>
 
 \[\begin{align*}
 (f * \delta)(t) &amp;= \int_{-\infty}^{\infty} f(\tau) \delta(t - \tau) d\tau \\
 &amp;= f(t)
 \end{align*}\]
 
-<p>The convolution of \(f\) with the Dirac delta function is simply \(f\) itself! This is because the Dirac delta function is zero everywhere except at \(t=0\), where it is infinite. Therefore, the only contribution to the integral comes from \(f(0)\), which is simply \(f\) itself.</p>
+<p>We can see that the convolution of \(f\) with the Dirac delta function is simply \(f\) itself, or \(\delta\) is an identity function with respect to integration. This is because the Dirac delta function is zero everywhere except when its argument \(t-\tau = 0\). Therefore, the only contribution to the integral comes from \(f(\tau = t)\), which is simply \(f\) itself. We can see in this example that the Dirac delta as a convolution kernel performs an identity operation.</p>
 
 <p>Now, let’s consider the convolution of \(f\) with a shifted Dirac delta function:</p>
 
@@ -223,63 +309,9 @@ b_3 \\
 &amp;= f(t - \tau)
 \end{align*}\]
 
-<p>The convolution of \(f\) with a shifted Dirac delta function is simply \(f\) shifted by \(\tau\)! This is because the shifted Dirac delta function is zero everywhere except at \(t=\tau\), where it is infinite. Therefore, the only contribution to the integral comes from \(f(\tau)\), which is simply \(f\) shifted by \(\tau\).</p>
+<p>The convolution of \(f\) with a shifted Dirac delta function is simply \(f\) shifted by \(\tau\)! This is because the shifted Dirac delta function is zero everywhere except at \(\tau'=t-\tau\). Therefore, the only contribution to the integral comes from \(f(\tau)\), which is simply \(f\) shifted by \(\tau\).</p>
 
-<h4 id="fourier-transform">Fourier Transform</h4>
-<ul>
-  <li>Illustrate the Fourier transform</li>
-  <li>Show in both continuous (uncountable basis) and also the countable Fourier basis</li>
-  <li>Show in the discrete case as well</li>
-</ul>
-
-<p>As illustrated in <a href="#example-2-fourier-basis-for-periodic-functions">Fourier Basis</a>, any periodic function can be written as a linear combination of sine and cosine, or more compactly, as a linear combination of complex exponentials. A general function on the real line can be expressed in terms of Fourier Transform, which is a continuous version of the Fourier series. The Fourier transform of a function \(f\) is defined as:</p>
-
-\[\begin{align*}
-\mathcal{F}[f](\omega) &amp;= \int_{-\infty}^{\infty} f(t) e^{-i \omega t} dt \\
-&amp;= \int_{-\infty}^{\infty} f(t) \cos(\omega t) dt - i \int_{-\infty}^{\infty} f(t) \sin(\omega t) dt
-\end{align*}\]
-
-<p>where \(\omega\) is the frequency. Let’s look at an example of the Fourier transform of a box function:</p>
-
-\[\begin{align*}
-f(t) &amp;=
-\begin{cases}
-1 &amp; |t| &lt; L \\
-0 &amp; \text{otherwise}
-\end{cases}
-\end{align*}\]
-
-<p>It can be shown that the Fourier transform of \(f\) is:</p>
-
-\[\begin{align*}
-\mathcal{F}[f](\omega) &amp;= 2L \frac{\sin(\omega L)}{\omega L} = 2L \ \text{sinc} (\omega L)
-\end{align*}\]
-
-<p>That is, for a function not is no longer periodic and is defined on the whole real line, to represent it in the frequency basis, we need a continuum of frequencies. This is in contrast to the Fourier series where we only need a countable number of frequencies. In contrast, for a periodic function \(f(x) = \sin(\omega_0 x)\), the Fourier transform is a Dirac delta function at \(\omega_0\). That is, we only need a single frequency to represent such function.</p>
-
-<!--
-Let's consider another example where $$f$$ is a truncated sine wave.
-
-$$
-\begin{align*}
-f(t) &=
-\begin{cases}
-\sin(\omega_0 t) & 0 \leq t \leq T = \frac{2 \pi}{\omega_0} \\
-0 & \text{otherwise}
-\end{cases}
-\end{align*}
-$$
-
-Then,
-
-$$
-\begin{align*}
-\mathcal{F}[f](\omega) &= \frac{1}{2i} \left[ \delta(\omega - \omega_0) - \delta(\omega + \omega_0) \right]
-\end{align*}
-$$
--->
-
-<h4 id="discrete-fourier-transform">Discrete Fourier Transform</h4>
+<h3 id="discrete-fourier-transform">Discrete Fourier Transform</h3>
 
 <!-- explain the Nuquist frequency as well -->
 
@@ -292,22 +324,41 @@ $$
   <li>\(X[k]\) is the DFT coefficient at frequency \(k\).</li>
   <li>\(x[n]\) is the input signal at time index \(n\).</li>
   <li>\(N\) is the total number of samples in the input signal.</li>
-  <li>The coefficients are complex and can be interpreted as the coefficients of the sine and cosine components (see <a href="#example-2-fourier-basis-for-periodic-functions">Fourier Basis</a>).</li>
+  <li>The coefficients are complex and can be interpreted as the coefficients of the sine and cosine components (see more in <a href="#example-2-fourier-basis-for-periodic-functions">Fourier Basis</a>).</li>
 </ul>
 
 <p>The original series can be recovered from \(X[k]\) via the inverse DFT (IDFT):</p>
 
-\[x[n] = \frac{1}{N} \sum_{k=0}^{N-1} X[k] \cdot e^{i\frac{2\pi}{N}kn}\]
+\[x[m] = \frac{1}{N} \sum_{k=0}^{N-1} X[k] \cdot e^{i\frac{2\pi}{N}km}\]
 
-<p>Both DFT and iDFT involves multiplying \(N\) numbers together for \(N\) entries, thus incurs a computational complexity of \(O(N^2)\). Later, we will discuss a way to perform these operations efficiently using the Fast Fourier Transform (FFT) algorithm that reduces the complexity to \(O(N \log N)\).</p>
+<p>To show that \(x[m]\) as can recovered exactly as above, we will make use of the following results for geometric series. For \(r \in \mathbb{C}\) and \(r \neq 1\),</p>
 
-<h4 id="fast-fourier-transform">Fast Fourier Transform</h4>
+\[\sum_{k=0}^{N-1} r^k = \frac{1 - r^N}{1 - r}\]
 
-<!--
-We show that DFT can be done without approximation with $$O(N \log N)$$ complexity.
--->
+<p>In this case, \(r = e^{-i\frac{2\pi}{N}(n-m)}\) and \(r^N = e^{-i2\pi(n-m)}\). For \(n \ne m\), the exponent is an integer multiple of \(2\pi\), which means that \(r^N = 1\) and \(\sum_{k=0}^{N-1} r^k = \frac{1 - r^N}{1 - r} = 0\). For \(n = m\), \(r = 1\) and \(\sum_{k=0}^{N-1} r^k = \sum_{k=0}^{N-1} 1 = N\). Therefore, we can concisely write</p>
 
-<p>The Fast Fourier Transform (FFT) is an algorithm that computes the DFT efficiently. The FFT algorithm is based on the divide-and-conquer strategy, and is able to compute the DFT in \(O(N \log N)\) time, which is much faster than the naive \(O(N^2)\) algorithm. We sketch a proof below.</p>
+\[\sum_{k=0}^{N-1} e^{-i\frac{2\pi}{N}k(n-m)} = N \cdot \delta_{n,m}\]
+
+<p>where \(\delta_{n,m}\) is the Kronecker delta function, which is \(1\) if \(n=m\) and \(0\) otherwise.</p>
+
+<p>Then, the iDFT becomes:</p>
+
+\[\begin{align*}
+\frac{1}{N} \sum_{k=0}^{N-1} X[k] \cdot e^{i\frac{2\pi}{N}km} &amp;= \frac{1}{N} \sum_{k=0}^{N-1} \left( \sum_{n=0}^{N-1} x[n] \cdot e^{-i\frac{2\pi}{N}kn} \right) \cdot e^{i\frac{2\pi}{N}km} \\
+&amp;= \frac{1}{N} \sum_{n=0}^{N-1} \left( x[n] \cdot \sum_{k=0}^{N-1} e^{-i\frac{2\pi}{N}k(n-m)} \right) \\
+&amp;= \frac{1}{N} \sum_{n=0}^{N-1} x[n] \cdot N \cdot \delta_{n,m} \\
+&amp;= x[m]
+\end{align*}\]
+
+<p>which means that we recover the original signal \(x[m]\) for \(m = 0, \dots, N-1\) perfectly from the DFT coefficients \(X[k]\). There is no information loss in the DFT operation.</p>
+
+<p>We can think of this as a duality between the spatial domain and the frequency domain. The DFT converts a signal from the spatial domain (\(N\) numbers) to the frequency domain (\(N\) numbers), and the iDFT converts a signal from the frequency domain back to the spatial domain. The DFT and iDFT are inverse operations of each other.</p>
+
+<p>In terms of <strong>computational complexity</strong>, both DFT and iDFT involves summing \(N\) numbers for each of the \(N\) entries, thus incurs a complexity \(O(N^2)\). Next, we will discuss a way to perform these operations efficiently with log linear complexity (without any approximation!!) by exploiting special structures of the complex exponentials. This is the main idea behind Fast Fourier Transform (FFT).</p>
+
+<h3 id="fast-fourier-transform">Fast Fourier Transform</h3>
+
+<p>Fast Discrete Fourier Transform or more commonly called Fast Fourier Transform (FFT) is an algorithm that computes the DFT efficiently. The FFT algorithm is based on the divide-and-conquer strategy, and is able to compute the DFT in \(O(N \log N)\) time, which is much faster than the naive \(O(N^2)\) algorithm. We sketch a proof below.</p>
 
 <p>Let’s start with the DFT definition:</p>
 
@@ -324,17 +375,17 @@ X[k]    &amp;= \sum_{n=0}^{N/2-1} x[2n] \cdot e^{-i\frac{2\pi}{N/2}kn} + e^{-i\f
 &amp;= E_k + e^{-i\frac{2\pi}{N}k} O_k
 \end{align*}\]
 
-<p>We can see that the first term is the DFT of the even terms of \(x\), and the second term is the DFT of the odd terms of \(x\), multiplied by a complex exponential. The key part is that we also obtain \(X[k + \frac{N}{2}]\) for free as:</p>
+<p>We can see that the first term is the DFT of the even terms of \(x\), denoted by \(E_k\), and the second term is the DFT of the odd terms of \(x\), denoted by \(O_k\), multiplied by a complex exponential. The key part is that we also obtain \(X[k + \frac{N}{2}]\) for free once we have \(E_k\) and \(O_k\), due to the identity:</p>
 
 \[X[k + \frac{N}{2}] = E_k - e^{-i\frac{2\pi}{N}k} O_k\]
 
-<p>Therefore, the the complexity of DFT to obtain \(X[k]\) consists of the complexity of two DFT of \(N/2\) elements plus \(O(1)\) operations, amortized by two, since for each \(X[k]\), we also get \(X[k+ \frac{N}{2}]\). This gives us the following recurrence relation:</p>
+<p>To obtain \(E_k\) (or \(O_k\)), we recursively break up it up into two terms, and so on. Therefore, the computational complexity of DFT to obtain \(X[k]\) consists of the complexity of two DFT of \(N/2\) elements plus \(O(1)\) operations, amortized by two, since for each \(X[k]\), we also get \(X[k+ \frac{N}{2}]\). This gives us the following recurrence relation:</p>
 
 \[T(N) = \frac{1}{2} \left( 2 T(N/2) + O(1) \right)\]
 
 <p>which yields \(T(N) = O(\log N)\). For all \(k\), this results in an \(O(N \log N)\) algorithm for DFT.</p>
 
-<h4 id="the-convolution-theorem">The Convolution Theorem</h4>
+<h3 id="the-convolution-theorem">The Convolution Theorem</h3>
 
 <!--
 A sketch of proof to show the idea behind convolution theorem. Make things very clear.
@@ -345,30 +396,51 @@ A sketch of proof to show the idea behind convolution theorem. Make things very 
 - need not be square. but show an example when it's square for causal convolution
 -->
 
-<p>In this section, we will show that a convolution of two vectors can be seen as a multiplication of their Fourier transforms. This is known as the convolution theorem. We will first show this in the continuous case, and then show how it can be extended to the discrete case.</p>
+<p>In this section, we will show that a convolution of two vectors can be seen as a multiplication of their Fourier transforms. This is known as the convolution theorem. We will show this in the discrete case. The continuous case extends naturally by replacing the summation with an integral (with exchange of order justified by Fubini’s theorem).</p>
 
-<p>Let’s start with the continuous case. The convolution of two functions \(f\) and \(g\) is defined as:</p>
+<p>The convolution of two sequences \(\mathbf{a}\) and \(\mathbf{b}\) is defined as:</p>
+
+\[\begin{align*}
+\mathbf{c}_m = (\mathbf{a} * \mathbf{b})_m &amp;= \sum_{n=0}^{N-1} a_n b_{m-n} \\
+\end{align*}\]
+
+<p>The Fourier transform of a sequence \(\mathbf{a}\) is defined as:</p>
+
+\[\begin{align*}
+\mathbf{A}_k = \left(\mathcal{F}(\mathbf{a}) \right)_k &amp;= \sum_{n=0}^{N-1} a_n e^{-i\frac{2\pi}{N}kn} \\
+\end{align*}\]
+
+<p>Then,</p>
+
+\[\begin{align*}
+\left( \mathcal{F} (\mathbf{a} * \mathbf{b}) \right)_k &amp;= \sum_{m=0}^{N-1} (\mathbf{a} * \mathbf{b})_m e^{-i\frac{2\pi}{N}km} \\
+&amp;= \sum_{m=0}^{N-1} \left( \sum_{n=0}^{N-1} a_n b_{m-n} \right) e^{-i\frac{2\pi}{N}km} \\
+&amp;= \sum_{n=0}^{N-1} \sum_{m=0}^{N-1} a_n e^{-i\frac{2\pi}{N}kn} b_{m-n} e^{-i\frac{2\pi}{N}k(m-n)} \\
+&amp;= \sum_{n=0}^{N-1} a_n e^{-i\frac{2\pi}{N}kn}  \sum_{m=0}^{N-1} b_{m-n} e^{-i\frac{2\pi}{N}k(m-n)} \\
+&amp;= \sum_{n=0}^{N-1} a_n e^{-i\frac{2\pi}{N}kn}  \sum_{s=-n}^{N-1-n} b_s e^{-i\frac{2\pi}{N}ks} \\
+&amp;= \left( \sum_{n=0}^{N-1} a_n e^{-i\frac{2\pi}{N}kn} \right) \left( \sum_{s=0}^{N-1} b_s e^{-i\frac{2\pi}{N}ks} \right)\\
+&amp;= \mathbf{A}_k \cdot \mathbf{B}_k \\
+&amp;= \mathcal{F}(\mathbf{a}) \cdot \mathcal{F}(\mathbf{b})
+\end{align*}\]
+
+<p>where we exchange variable \(s = m-n\) and the fact that \(b_s = 0\) for \(0 &lt; s &lt; N-1\), so the sum \(\sum_{s=-n}^{N-1-n} b_n \cdot \xi\) is the same as \(\sum_{s=0}^{N-1} b_n \cdot \xi\). The proof can also be done simpler by consider the summation from \(-\infty\) to \(\infty\) where values beyond its support are zero.</p>
+
+<h5 id="extras-continuous-case-of-convolution-theorem">Extras: Continuous Case of Convolution Theorem</h5>
+
+<p>In the continuous case involving convolution of two functions \(f\) and \(g\), we also provide a proof sketch below.</p>
+
+<p>The convolution of two functions is defined as:</p>
 
 \[(f * g)(t) = \int_{-\infty}^{\infty} f(\tau) g(t - \tau) d\tau\]
 
-<p>or in the discrete case</p>
-
-\[(f * g)(t) = \sum_{\tau=-\infty}^{\infty} f(\tau) g(t - \tau)\]
-
-<!-- Let $$F$$ and $$G$$ be the corresponding Fourier Transform. -->
-
-<p>We will sketch the proof of the convolution theorem in the continuous case</p>
+<p>Then, the Fourier transform of the convolution is:</p>
 
 \[\begin{align*}
 \mathcal{F}[f * g](\omega) &amp;= \int_{-\infty}^{\infty} (f * g)(t) e^{-i \omega t} dt \\
 &amp;= \int_{-\infty}^{\infty} \left( \int_{-\infty}^{\infty} f(\tau) g(t - \tau) d\tau \right) e^{-i \omega t} dt \\
-&amp;= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} f(\tau) g(t - \tau) e^{-i \omega t} d\tau dt \\
-&amp;= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} f(\tau) g(t - \tau) e^{-i \omega t} dt d\tau \\
 &amp;= \int_{-\infty}^{\infty} f(\tau) \left( \int_{-\infty}^{\infty} g(t - \tau) e^{-i \omega t} dt \right) d\tau \\
 &amp;= \int_{-\infty}^{\infty} f(\tau) \left( \int_{-\infty}^{\infty} g(t) e^{-i \omega (t + \tau)} dt \right) d\tau \\
-&amp;= \int_{-\infty}^{\infty} f(\tau) \left( \int_{-\infty}^{\infty} g(t) e^{-i \omega t} e^{-i \omega \tau} dt \right) d\tau \\
-&amp;= \int_{-\infty}^{\infty} f(\tau) \left( \int_{-\infty}^{\infty} g(t) e^{-i \omega t} dt \right) e^{-i \omega \tau} d\tau \\
-&amp;= \int_{-\infty}^{\infty} f(\tau) \mathcal{F}[g](\omega) e^{-i \omega \tau} d\tau \\
+&amp;= \left( \int_{-\infty}^{\infty} f(\tau)  e^{-i \omega \tau} d\tau \right) \cdot \left( \int_{-\infty}^{\infty} g(t) e^{-i \omega t} dt \right) \\
 &amp;= \mathcal{F}[f](\omega) \cdot \mathcal{F}[g](\omega)
 \end{align*}\]
 
@@ -376,38 +448,41 @@ A sketch of proof to show the idea behind convolution theorem. Make things very 
 
 \[(f*g)(w) = \mathcal{F}^{-1}[\mathcal{F}[f](\omega) \cdot \mathcal{F}[g](\omega)](w)\]
 
-<p>which also holds in the discrete convolution case as well.</p>
+<h3 id="convolution-theorem--fft--log-linear-convolution">Convolution Theorem + FFT = Log Linear Convolution</h3>
 
-<h4 id="long-convolution-in-on-log-n">Long Convolution in \(O(N \log N)\)</h4>
-
-<p>The implication of the convolution theorem is that if we want to perform a convolution of long signals \(f(t)\) and \(g(t)\), which naively would incur \(O(N^2)\) computational complexity, we can reduce it to \(O(N \log N)\) without any approximation. This can be done by</p>
+<p>To recap, the implication of the convolution theorem is that if we want to perform a convolution of long signals \(f(t)\) and \(g(t)\), which naively would incur \(O(N^2)\) computational complexity, we can reduce it to \(O(N \log N)\) without any approximation. Below are the steps:</p>
 
 <ul>
-  <li>Computing the Fourier transform of \(f\) and \(g\), which incures \(O(N \log N)\) via Fast Fourier Transform. We obtain the frequency components of length \(N\).</li>
-  <li>Then multiply the Fourier transforms, incurring \(O(N)\), and finally compute the inverse Fourier transform of the product, which incurs another \(O(N \log N)\).</li>
-  <li>In total, the convolution can be done in \(O(N \log N)\) via Fast Fourier Transform and the Convolution Theorem, instead of the usual \(O(N^2)\). This is quite neat!!</li>
+  <li>Compute the Fourier transform of vectors \(a\) and \(v\), each of length \(N\), which incures \(O(N \log N)\) via Fast Fourier Transform. Here, we obtain the frequency components \(A\) and \(B\), each of length \(N\).</li>
+  <li>Multiply the Fourier transforms of two vectors \(A\) and \(B\), incurring \(O(N)\), and finally compute the inverse Fourier transform of \(A \cdot B\), which incurs another \(O(N \log N)\).</li>
+  <li>In total, the convolution can be done in \(O(N \log N)\) via Fast Fourier Transform and the Convolution Theorem, instead of the usual \(O(N^2)\). Magic!</li>
   <li><strong>This sub-quadratic behavior allows fast long range modeling, and is the foundation of convolution models such as S4, S4d, GSS, H3, and Hyena.</strong></li>
 </ul>
 
-<p><!-- </details> A. Convolution and Fast Fourier Transform  --></p>
-
 <h2 id="b-orthonormal-basis-in-function-space">B. Orthonormal Basis in Function Space</h2>
 
-<p>We turn our attention to a specialized function space known as a Hilbert space<sup id="fnref:hilbert-space" role="doc-noteref"><a href="#fn:hilbert-space" class="footnote" rel="footnote">2</a></sup> \(\mathcal{H}\), equipped with a countable and dense orthonormal basis<sup id="fnref:schauder-basis" role="doc-noteref"><a href="#fn:schauder-basis" class="footnote" rel="footnote">3</a></sup> \(\{ g_n \}_{n=0}^\infty\). In essence, a Hilbert space provides a notion of projections and distance via its inner product \(\langle f, h \rangle\) and the induced norm \(\| f \| = \sqrt{\langle f, f \rangle}\). Further, a Hilbert space has a completeness property, meaning that any sequence of elements in \(\mathcal{H}\) that draws progressively closer together actually converge within the space. As example of such a Hilbert space is the space of square integrable functions on an interval \(L^2[a,b]\), with a corresponding inner product</p>
+<!--
+To do: discuss that DFT signals are sampled from a function -- 
+this is the theory that describes how the DFT interpolates and approximate the underlying function.
+
+-->
+
+<p>We turn our attention to a vector space whose elements are functions. A special kind of such vector space we will consider is a Hilbert space<sup id="fnref:hilbert-space" role="doc-noteref"><a href="#fn:hilbert-space" class="footnote" rel="footnote">5</a></sup> \(\mathcal{H}\) that is equipped with a countable and dense orthonormal basis<sup id="fnref:schauder-basis" role="doc-noteref"><a href="#fn:schauder-basis" class="footnote" rel="footnote">6</a></sup> \(\{ g_n \}_{n=0}^\infty\). In essence, a Hilbert space provides a notion of projections and distance via its inner product \(\langle f, h \rangle\) and the induced norm \(\| f \| = \sqrt{\langle f, f \rangle}\). Further, a Hilbert space has a completeness property, meaning that any sequence of elements in \(\mathcal{H}\) that draws progressively closer together actually converge within the space. As example of such a Hilbert space is the space of square integrable functions on an interval \(L^2[a,b]\), with a corresponding inner product</p>
 
 \[\langle f, g \rangle = \int_a^b f(x)^* g(x) \cdot w(x) dx\]
 
-<p>where \(f(x)^*\) denotes the complex conjugate of \(f\). Optionally, there can be a function \(w(x)\) that corresponds to the weight of different points in the interval which reflects the measure that the inner product is defined on.<sup id="fnref:measure-theoretic-innerproduct" role="doc-noteref"><a href="#fn:measure-theoretic-innerproduct" class="footnote" rel="footnote">4</a></sup> For instance, we may want to weight points far away with smaller weights – this will give rise to a different inner product compared to the case where all points are weighted equally.</p>
+<p>where \(f(x)^*\) denotes the complex conjugate of \(f\). The function \(w(x)\) corresponds to the weight of different points in the interval which reflects the measure that the inner product is defined on.<sup id="fnref:measure-theoretic-innerproduct" role="doc-noteref"><a href="#fn:measure-theoretic-innerproduct" class="footnote" rel="footnote">7</a></sup> For instance, we may want to weigh points far away with smaller weights. Different weight \(w(x)\) used in the integral above (or different measure) will give rise to a different inner product, which in turn defines a different notion of orthogonality and distance in the associated Hilbert space.</p>
 
-<p>The power of the dense orthonormal basis \(\mathcal{G}\) is that it allows us to represent any function in the space using a linear combination of the basis elements. That is, for any function \(u(t) \in \mathcal{H}\), there exists coefficients \(\{ c_n \}_{n=1}^\infty\) such that:</p>
+<p>The power of the dense orthonormal basis \(\mathcal{G}\) is that it allows us to represent any function in the Hilbert space using a linear combination of the basis elements. That is, for any function \(u(t) \in \mathcal{H}\), there exists coefficients \(\{ c_n \}_{n=1}^\infty\) such that:</p>
 
 \[u(t) = \sum_{n=1}^{\infty} c_n g_n(t)\]
 
-<p>That is, in the orthonormal basis \(\mathcal{G}\), a function \(u\)’s representation is simply  a (infinite) vector \(\{c_n\}_{n=1}^\infty\). This is incredibly powerful since we reduce a possibly very complicated function to a sequence of numbers.</p>
+<p>That is, in the orthonormal basis \(\mathcal{G}\), a function \(u\) can be represented as simply an infinite sequence \(\{c_n\}_{n=1}^\infty\). <sup id="fnref:isomorphism" role="doc-noteref"><a href="#fn:isomorphism" class="footnote" rel="footnote">8</a></sup>
+It is quite profound that an entire function whose domain consists of uncountably many numbers can be described by a countable set of numbers, the coefficients of the respective basis.</p>
 
-<p>We can also think of the partial sum \(u_m(t) = \sum_{n=1}^{m} c_n g_n(t)\) as an approximation of the function \(u(t)\), where the approximation gets better as \(m \to \infty\) (where the convergence is in the norm<sup id="fnref:convergence-in-norm" role="doc-noteref"><a href="#fn:convergence-in-norm" class="footnote" rel="footnote">5</a></sup>). Therefore, a finite vector \((c_1, c_2, .., c_m)\) can also be used to approximately represent an entire function!! This is a profound concept used in many areas of mathematics, including functional analysis, harmonic analysis, and signal processing.</p>
+<p>We can also think of the partial sum \(u_m(t) = \sum_{n=1}^{m} c_n g_n(t)\) as an approximation of the function \(u(t)\), where the approximation gets better as \(m \to \infty\) (where the convergence is in the norm<sup id="fnref:convergence-in-norm" role="doc-noteref"><a href="#fn:convergence-in-norm" class="footnote" rel="footnote">9</a></sup>). Therefore, a finite vector \((c_1, c_2, .., c_m)\) can also be used to <strong>approximately</strong> represent an entire function where the approximation gets better as \(m\) is larger. This concept is used widely for compression of signals such as audio, images, and videos.</p>
 
-<p>While this representation ensures approximation, it does not directly offer a method to find \(c_n\) for a given \(u(t)\). The key lies in the <strong>orthogonality</strong> of the basis. The set \(\{ g_n \}\) is orthonormal, implying \(\langle g_m, g_n \rangle = \delta_{m,n}\), where \(\delta_{m,n}\) is the Kronecker delta, a function that returns 1 when \(m = n\) and 0 otherwise. This orthogonality simplifies our task of finding coefficients to taking inner products:</p>
+<p>While this representation ensures approximation, it does not directly offer a method to find \(c_n\) for a given \(u(t)\). The key lies in the <strong>orthogonality</strong> of the basis. The set \(\{ g_n \}\) is orthonormal, implying \(\langle g_m, g_n \rangle = \delta_{m,n}\), where \(\delta_{m,n}\) is the Kronecker delta, a function that returns 1 when \(m = n\) and 0 otherwise. This orthogonality simplifies our task of finding coefficients to taking inner products, where we extract the coefficient of \(g_n\) via:</p>
 
 \[\begin{align*}
 \langle u(t), g_n(t) \rangle &amp;= \langle \sum_{m=1}^{\infty} c_m g_m(t), g_n(t) \rangle \\
@@ -416,9 +491,9 @@ A sketch of proof to show the idea behind convolution theorem. Make things very 
 &amp;= c_n
 \end{align*}\]
 
-<p>This “filtering” property, intrinsic to orthonormal bases, ensures that we isolate each coefficient efficiently.</p>
+<p>This filtering property, intrinsic to orthonormal bases, ensures that we isolate each coefficient efficiently.</p>
 
-<p>Based on the weight function \(w(x)\) and the subspace of functions we operate on, the orthonormal basis can be different. For instance, for uniform weight \(w\) on an interval, the Legendre polynomials form an orthonormal basis. For periodic functions with uniform weight \(w\) on an interval, the Fourier basis is an orthonormal basis. For an exponentially decaying weight \(w\), the Laguerre polynomials form an orthonormal basis. We will discuss these three examples below.</p>
+<p>Based on the weight function \(w(x)\) and the subspace of functions we operate on, the orthonormal basis can be different. For instance, for uniform weight \(w\) on an interval, the Legendre polynomials form an orthonormal basis. For periodic functions with uniform weight \(w\) on an interval, the Fourier series form an orthonormal basis. For an exponentially decaying weight \(w\), the Laguerre polynomials form an orthonormal basis. We will discuss these three examples below.</p>
 
 <h4 id="example-1-legendre-polynomials-as-orthonormal-basis-on-uniform-measure">Example 1: Legendre Polynomials as Orthonormal Basis on Uniform Measure</h4>
 
@@ -455,7 +530,7 @@ P_3(x) &amp;= \frac{1}{2} (5x^3 - 3x) \\
 
 <h4 id="example-2-fourier-basis-for-periodic-functions">Example 2: Fourier Basis for Periodic Functions</h4>
 
-<p>On \(L^2[-L,L]\) with the inner product \(\langle f,g \rangle = \frac{1}{2L} \int_{-L}^{L} f(x)^* g(x) dx\) where \(^*\) denotes complex conjugate, the Fourier basis is an orthonormal basis when applied to periodic functions.<sup id="fnref:periodic" role="doc-noteref"><a href="#fn:periodic" class="footnote" rel="footnote">6</a></sup></p>
+<p>On \(L^2[-L,L]\) with the inner product \(\langle f,g \rangle = \frac{1}{2L} \int_{-L}^{L} f(x)^* g(x) dx\) where \(^*\) denotes complex conjugate, the Fourier basis is an orthonormal basis when applied to periodic functions.<sup id="fnref:periodic" role="doc-noteref"><a href="#fn:periodic" class="footnote" rel="footnote">10</a></sup></p>
 
 <p>The Fourier series representation of a periodic function \(f(x)\) over the interval \([-L,L]\) is given by:</p>
 
@@ -478,6 +553,8 @@ P_3(x) &amp;= \frac{1}{2} (5x^3 - 3x) \\
 \end{align*}\]
 
 <p>For \(n=m\), we have \(\frac{1}{2L} \int_{-L}^{L} e^{- i\frac{2\pi m}{2L}x} e^{i\frac{2\pi m}{2L}x} dx = \frac{1}{2L} \int_{-L}^{L} 1 dx = 1\), which is indeed normalized.</p>
+
+<h5 id="how-do-we-interpret-complex-coefficients">How do we interpret complex coefficients?</h5>
 
 <p>The complex representation here is a convenient way to express the Fourier basis, but we can also express it in terms of cosine and sine functions which gives us nice physical interpretations. This integer multiples of the base frequency (or simply called harmonics), with arbitrary phase in that frequency controlled by the relative coefficient of the cosine and sine functions.</p>
 
@@ -506,6 +583,9 @@ f(x) &amp;= \sum_{n=-\infty}^{\infty} c_n e^{i \omega n x} \\
 &amp;= b_0 + \sum_{n=1}^{\infty} (b_n + b_{-n}) \cos(\omega n x) + (a_n - a_{-n}) \sin(\omega n x)  \\
 \end{align*}\]
 
+<p>In short, the complex coefficients \(c_n\) is such that their real and imaginary parts are the coefficients of the cosine and sine functions, respectively.</p>
+
+<h5 id="real-valued-functions">Real-Valued Functions</h5>
 <p>If the function \(f(x)\) is real, then \(\text{Im}[f(x)] = 0\), which implies that \(b_0 = 0\) and \(a_n = a_{-n}\) and \(b_n = -b_{-n}\). That is, for real \(f\), we do not need to compute the coefficients with respect to negative frequencies due the symmetry.</p>
 
 <p>The simplified components for a real \(f\) becomes:</p>
@@ -545,25 +625,47 @@ L_3(x) &amp;= \frac{1}{6}(-x^3 + 9x^2 - 18x + 6) \\
 
 <p>Here, \(\delta_{m,n}\) is the Kronecker delta function.</p>
 
-<p>We can see that a different weight function, or a different measure, would give rise to a different set of orthonormal basis functions. This is a powerful concept that we will revisit later in the context of convolution models, especially in the construct of the Hippo matrix.</p>
+<p>We can see that a different weight function, or a different measure, would give rise to a different set of orthonormal basis functions. This is a powerful concept that we will revisit later in the context of convolution models, especially in the construct of the HiPPO matrix.</p>
 
 <!--
 In summary, Laguerre polynomials form an orthonormal basis in the Hilbert space $$L^2[0, \infty)$$ with the inner product defined using the weight function[^exp-measure] $$w(x) = e^{-x}$$. They provide a powerful mathematical tool for representing and analyzing functions in these spaces, particularly those that exhibit exponential or decay behavior. 
 -->
 
-<h4 id="approximating-real-world-functions-with-legendre-vs-fourier-basis">Approximating Real-World Functions with Legendre vs. Fourier Basis</h4>
+<h4 id="examples-approximating-data-with-legendre-vs-fourier-basis">Examples: Approximating Data with Legendre vs. Fourier Basis</h4>
 
-<p>Here, we show a Jupyter notebook where we take example functions and approximate them using the Legendre and Fourier basis.</p>
+<p>We show a few examples here where we use Legendre and Fourier bases to approximate functions with finite number of basis elements \(n\). See a Colab notebook for code and more examples <a href="https://colab.research.google.com/drive/1uIUZExE9jXomM40TnSn50rjIL3ar13Jk#scrollTo=WecGRCV-aCNz">here</a> for the code.</p>
 
-<p>TODO – add notebook here</p>
+<div class="col-sm mt-3 mt-md-0" style="max-width: 60%; margin-left: auto; margin-right: auto">
+<figure style="background-color: white;">
 
-<p><br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br /></p>
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/example_legendre_fourier.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Approximating data via Legendre and Fourier Basis</figcaption>
+
+</figure>
+
+</div>
+
+<p>If we extrapolate the data outside the original domain, for Fourier series, the pattern repeats periodically. This can also be shown analytically by observing that for any \(x \in [-L,L]\), we have \(f(x) = f(x + 2L)\) in the Fourier representation.</p>
+
+<div class="col-sm mt-3 mt-md-0" style="max-width: 60%; margin-left: auto; margin-right: auto">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/fourier_extrapolations.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Extrapolation via Fourier Series</figcaption>
+
+</figure>
+
+</div>
 
 <hr />
 
@@ -575,17 +677,20 @@ Give intuition behind state spaces. State spaces can be used to model complex dy
 
 <p>State space models are a class of models used to describe the time evolution of systems. They are widely used in many fields, including control theory, signal processing, and machine learning. In this section, we will give a brief introduction to state space models, and show how they can be used to model complex dynamics.</p>
 
-<p>In the continuous case, state space models can be written as:</p>
+<p>In the continuous time scenario, linear state space models can be written as matrix-vector multiplications where the \(N\)-dimensional state vector \(\mathbf{x}(t)\) evolves over time \(t\) according to the following differential equation:</p>
 
 \[\begin{align*}
 \frac{d}{dt} \mathbf{x}(t) &amp;= A \mathbf{x}(t) + B \mathbf{u}(t) \\
 \mathbf{y}(t) &amp;= C \mathbf{x}(t) + D \mathbf{u}(t) =  C \mathbf{x}(t)
 \end{align*}\]
 
-<p>\(\mathbf{x}\) is a N-dimensional vector, \(A\) is an NxN matrix, B is Nx1, and C is 1xN. \(\mathbf{u}\) is usually called the input vector, and \(\mathbf{y}\) is the output vector.
+<!-- $$\mathbf{x}$$ is a N-dimensional vector, -->
+<p>where \(u(t) \in \mathbb{R}\), \(A\) is an \(N \times N\) matrix, \(B\) is \(N \times 1\), and \(C\) is \(1 \times N\). \(\mathbf{u}\) is usually called the input vector, and \(\mathbf{y}\) is the output vector.
 In most cases \(D\) is assumed to be \(0\).</p>
 
-<p>For numerical purposes, we can discretize the state space model where we have \(u_k\) and \(x_k\). In this discrete case, we can approximate \(x_k\) by using the derivative at \(k\), or also the average of the derivative at \(k\) and \(k-1\). That is ,</p>
+<h3 id="recurrent-view-of-state-space-models">Recurrent View of State Space Models</h3>
+
+<p>In the discretized case, the evolution goes from time step \(t=k-1\) to \(t=k\), instead of infinitesimal step in the continuous time dynamics \(t\) to \(t + dt\). We can approximate \(x_k\) by either using the derivative at \(k\), or also the average of the derivative at \(k\) and \(k-1\) for better numerical stability (bilinear/trapezoid method). With step size \(\Delta\),</p>
 
 \[x_{k} \approx x_{k-1} + \frac{\Delta}{2} (x'_{k} + x'_{k-1}) + O(\Delta^2)\]
 
@@ -595,11 +700,27 @@ In most cases \(D\) is assumed to be \(0\).</p>
 x_{k} &amp;= (I - \frac{\Delta}{2} A)^{-1} (I + \frac{\Delta}{2} A) x_{k-1} + \frac{\Delta}{2} B (I - \frac{\Delta}{2} A)^{-1} u_k \\
 &amp; \  \text{or more succinctly}\\
 x_{k} &amp;= \bar{A} x_{k-1} + \bar{B} u_k \\
+y_k &amp;= C x_k 
 \end{align*}\]
 
-<p>where \(\Delta\) is the step size and \(y_k = C x_k\).</p>
+<p>That is, we can obtain the current state \(x_k\) given the the input \(u_k\) and only past state \(x_{k-1}\), without needing to know the previous states or inputs. This is a <strong>recurrent</strong> property that is useful during inference since it incurs \(O(1)\) compute complexity without dependency of the context length. This is quite different from attention where we need to use cached key and value to predict the next step, which incurs \(O(L)\) memory IO and compute during incremental decoding.</p>
 
-<h4 id="example-harmonic-oscillator">Example: Harmonic Oscillator</h4>
+<div class="col-sm mt-3 mt-md-0" style="max-width: 100%; margin-left: auto; margin-right: auto">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/state_space_models.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Discretized linear state space models in recurrent view and convolution view</figcaption>
+
+</figure>
+
+</div>
+
+<h5 id="example-harmonic-oscillator">Example: Harmonic Oscillator</h5>
 
 <p>Let’s develop some intuition for what state space models can do. We will consider a simple example of a spring attached to a mass \(m\). The spring has a spring constant \(k\), and the mass is attached to a wall. The mass is also subject to a force \(u(t)\).</p>
 
@@ -609,7 +730,7 @@ x_{k} &amp;= \bar{A} x_{k-1} + \bar{B} u_k \\
 
 <p>where \(y(t)\) is the displacement from equilibrium of the mass at time \(t\). We know that in the case of \(u(t) = 0\), this should be a simple harmonic oscillator where the solutions are pure sine wave with certain phase (depending on the initial position and velocity). Let’s see how well we can model this system using a state space model.</p>
 
-<p>While state space models looks linear at first glance, we will see that it can describe non-linear dynamics. The key is how we define the state \(\mathbf{x}\). Let \(v(t) = \frac{dy}{dt}\) denote the velocity. In this case, we can see that the differential equation above can be written as:</p>
+<p>The key is how we define the state \(\mathbf{x}\). Let \(v(t) = \frac{dy}{dt}\) denote the velocity. In this case, we can see that the differential equation above can be written as:</p>
 
 \[v'(t) = - \frac{k}{m} y(t) + \frac{1}{m} u(t)\]
 
@@ -647,9 +768,10 @@ v(t)
 1 &amp; 0 \\
 \end{bmatrix} \mathbf{x}(t) = C \mathbf{x}(t)\]
 
-<p>Below, we adapt the code given in <a href="https://srush.github.io/annotated-s4/">The Annotated S4</a> for state space models.</p>
+<!--
 
-<!-- show the notebook -->
+While state space models looks linear at first glance, we will see that it can describe non-linear dynamics over time. 
+-->
 
 <p>In this case we use the initial condition such as</p>
 
@@ -659,19 +781,124 @@ v(t)
 0 \\
 \end{bmatrix}\]
 
-<p>which corresponds to initial position at $1$ without velocity. We also use \(u(t) = 0\), meaning that no additional force is applied. We can see that the position calculated via the discretized discrete state space follows the sine equation quite perfectly.</p>
+<p>which corresponds to initial position at $1$ without velocity. We also use \(u(t) = 0\), meaning that no additional force is applied. We can see that the position calculated via the discretized discrete state space follows the sine equation quite perfectly. See the Colab notebook <a href="https://colab.research.google.com/drive/1FWj_r9IV4feHl1W7hE0KNgAaYUIIxpNG#scrollTo=PWjEKOzXHBDr">here</a>. Note that we adapted the code given in <a href="https://srush.github.io/annotated-s4/">The Annotated S4</a> for state space models.</p>
 
-<p>Just for fun, let’s also consider another case where we start from initial position and velocity \(0\), but with \(u[t]\) being something like a Dirac Delta function which injects a fixed momentum at time \(t=0\). In this case, \(u[0] = 1\) and \(u[t] = 0\) for all \(t &gt; 0\). As shown below, the state space models are able to capture the dynamics quite nicely. Let’s see I’m quite convinced that state space models are quite powerful and can capture complex dynamics.</p>
+<div class="row mt-3 mt-md-0">
+    <div class="col-sm-6" style="max-width: 45%; margin-left: auto; margin-right: auto">
+        <figure style="background-color: white;">
 
-<h3 id="convolution-models">Convolution Models</h3>
+  <picture>
+    
 
-<p>Now we are almost ready to talk about a family of state-space inspired models that are able to model long range dependencies such as S4 and H3. First, we discuss the Hippo matrix and what it represents.</p>
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/initial_condition_x1.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
-<h4 id="convolution-view-of-state-space-models">Convolution View of State Space Models</h4>
+  </picture><figcaption class="caption">State space model for spring-mass with no external force</figcaption>
 
-<!-- discuss how state spaces can be unrolled -- see the matrix view
+</figure>
+
+    </div>
+    <div class="col-sm-6" style="max-width: 45%; margin-left: auto; margin-right: auto">
+        <figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/pulse_force.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">State space model for spring-mass with external force at time 0</figcaption>
+
+</figure>
+
+    </div>
+</div>
+
+<p>Just for fun, let’s also consider another case where we start from initial position and velocity \(0\), but with \(u[t]\) being something like a Dirac Delta function which injects a fixed momentum at time \(t=0\). In this case, \(u[0] = 1\) and \(u[t] = 0\) for all \(t &gt; 0\). As shown below, the state space models are able to capture the dynamics quite nicely.</p>
+
+<p>We also explore other variations such as exponentially decay amplitude due to friction and resonance where the external force has the same frequency as the natural frequency. We also show the cases where the numerical approximation can break down resulting in alising effect, once the frequency becomes too high compared to the granularity of the discretization.</p>
+
+<div class="row mt-3 mt-md-0">
+    <div class="col-sm-6" style="max-width: 45%; margin-left: auto; margin-right: auto">
+        <figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/springmass_with_friction.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Friction results in exponential decay of amplitude.</figcaption>
+
+</figure>
+
+    </div>
+    <div class="col-sm-6" style="max-width: 45%; margin-left: auto; margin-right: auto">
+        <figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/resonance.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Impulse force at resonance frequency results in increasingly large oscillation.</figcaption>
+
+</figure>
+
+    </div>
+</div>
+
+<div class="row mt-3 mt-md-0">
+    <div class="col-sm-6" style="max-width: 45%; margin-left: auto; margin-right: auto">
+        <figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/aliasing_1.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">High frequency compared to sampling frequency leads to aliasing (incorrect solution to the dynamical system).</figcaption>
+
+</figure>
+
+    </div>
+    <div class="col-sm-6" style="max-width: 45%; margin-left: auto; margin-right: auto">
+        <figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/aliasing_2.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Another aliasing example.</figcaption>
+
+</figure>
+
+    </div>
+</div>
+
+<!-- 
+Eigenvalue of this dynamics is
+
++- i \sqrt{\frac{k}{m}}
+
+This is complex and will have no long range problem.
+
+If it is real and positive however, there can be some numerical instability.
+
+This might be the case for resonance?
 -->
-<p>Now let’s think about how we can process a vector input \(\mathbf{u} = \{ u_k \}_{k=0}^L\) to obtain an output \(\{y_k\}\) in batch. Due to the recurrence relations, we can write the output \(y_k\) as</p>
+
+<h4 id="what-can-we-model-with-linear-state-space-models">What Can We Model With Linear State Space Models?</h4>
+
+<p>In general, any linear differential equations can be framed as a linear state space. This excludes some dynamics; for instance, celestial mechanics, where the gravitational force is proportional to the inverse square of the distance between the two bodies, cannot be modeled with a linear state space.</p>
+
+<h3 id="convolution-view-of-state-space-models">Convolution View of State Space Models</h3>
+
+<p>Now let’s think about how we can process a vector input \(\mathbf{u} = \{ u_k \}_{k=0}^L\) to obtain an output \(\{y_k\}_{k=0}^L\) in batch. Due to the recurrence relations, we can write the output \(y_k\) as</p>
 
 \[\begin{align*}
 y_k &amp;=  \sum_{i=0}^{k} \bar{C} \bar{A}^{k-i} \bar{B} u_i  + \bar{C} \bar{A}^k x_0 \\
@@ -680,36 +907,213 @@ y_k &amp;=  \sum_{i=0}^{k} \bar{K}_{k-i} u_i + 0 \\
 
 <p>where \(\bar{K}_n = \bar{C} \bar{A}^n \bar{B}\) and \(x_0\) is the initial state, which is often taken to be zero. In this form, we see that \(y_k\) is a convolution between the L-dimensional vector \(\mathbf{\bar{K}}\) and the input vector \(\mathbf{u}\). It means that we can think of the state space model as a convolution model, where the convolution kernel is \(\mathbf{\bar{K}}\). This unrolled view is useful to process the entire input sequence, either during inference or training.</p>
 
-<p>That is, if we have a sequence of length \(L\) as an input, once if we the kernel \(\mathbf{\bar{K}}\), we can compute the entire output \(\mathbf{y}\) in \(O(L \log L)\) time. Such \(\mathbf{y}\) can be used to predict the next step. In such next step, we can then predict subsequent step in constant time due to the recurrence property!</p>
+<p>That is, if we have a sequence of length \(L\) as an input, once if we the kernel \(\mathbf{\bar{K}}\), we can compute the entire output \(\mathbf{y}\) in \(O(L \log L)\) time due to the convolution theorem + FFT. The batched operation is important for training as well as initial processing of input sequence during inference.</p>
 
-<p>Now, you may wonder what would be the matrices \(A\), \(B\), \(C\) that we should use? Remember from our earlier examples for the harmonic oscillator that \(A\) controls the evolution of the dynamical system. How should we construct or interpret such a system to model something such as language modeling or time series forecasting? Next, we discuss the Hippo matrix, which defines a type of matrix \(A,B\) that can be used to model long range dependencies.</p>
+<!--
+The contextualized output $$\mathbf{y}$$ can be used to predict the next step. 
 
-<h4 id="hippo-matrix">Hippo Matrix</h4>
+In such next step, we can then predict subsequent step in constant time with respect to $$L$$ due to the recurrence property.
+-->
 
-<p>The Hippo matrices <a class="citation" href="#hippo">(Gu et al., 2020)</a> are the \(A,B\) matrices associated with state space models, obtained for <code class="language-plaintext highlighter-rouge">input memorization</code> problem where we want the state \(x_{t}\) to capture the entire function \(u_{t' \le t}\), which is the input function up to time \(t\). This can be very useful for long range modeling where we want the <strong>output feature at a given time to represent the entire past!</strong> There are a few key points before getting into the details on how to do this.</p>
+<h4 id="ssm-for-sequence-modeling">SSM for Sequence Modeling</h4>
 
-<p>First, the state vector \(x_{t}\) is \(N-\) dimensional. How do we use a finite vector to represent an entire function? (Hint: think about orthonormal basis in function space). What if we want to weigh different points \(u(t')\) differently, for example, if we want to emphasize on the recent past more than the distant past?</p>
+<p>Now, you may wonder what would be the matrices \(A\), \(B\), \(C\) that we should use? Remember from our earlier examples for the harmonic oscillator that the matrix \(A\) controls the evolution of the dynamical system. How should we construct or interpret such a system to model something such as language modeling or time series forecasting? In a later section, we discuss the HiPPO matrix, which defines a type of matrix \(A\) that can be used to model long range dependencies.</p>
 
-<p>Remember that for a given dynamics that we want to model via state space (e.g. harmonic oscillator, or input memorization), we are free to choose the definition of such state vector \(x\) and the matrices \(A,B\). Below, we outline the core idea of the Hippo framework for the input memorization problem.</p>
+<h2 id="d-einstein-summation-for-general-tensor-operations">D. Einstein Summation for General Tensor Operations</h2>
+
+<p>We cover a brief introduction to Einstein summation, which is a concise notation for tensor operations. We will use this notation to describe attention or other tensor operations in a concise manner.</p>
+
+<p>Let’s consider the attention weight between query tensor \(Q\) and key tensor \(K\). The query tensor is of shape \(Q_{bhnk}\) where \(b\) is the batch index, \(h\) is the head index, \(n\) is the query length index, and \(k\) is the head dimension index. The key tensor is of shape \(K_{bhmk}\) where \(m\) is the key length index. The attention weight tensor is of shape \(A_{bhnm}\).</p>
+
+<p>The attention weight tensor, before softmax, can be described in various ways such as</p>
+
+\[\begin{align*}
+A_{bhnm} &amp;= \sum_{k} Q_{bhnk} K_{bhmk} \tag{explicit sum over $k$} \\
+A_{bhnm} &amp;= \sum Q_{bhnk} K_{bhmk} \tag{implicit sum over $k$} \\
+A_{bhnm} &amp;= Q_{bhnk} K_{bhmk} \tag{what Einstein would write} \\
+A_{bhnm}         &amp;= \langle Q_{bhnk} , K_{bhmk} \rangle \tag{inner product notation} \\
+A &amp;= \langle Q, K \rangle 
+\end{align*}\]
+
+<p>In all of the notations above, we are summing over the head dimension \(k\), which is the dimension that we are reducing. The sum over \(k\) need not be explicitly mentioned if the output dimension is specified. That is, since \(A_{bhnm}\) does not contain \(k\), it implies that the output is the result of reduction over \(k\). Since this is akin to inner product over \(k\) where all other axes are broadcasted, we can write it as \(\langle Q, K \rangle\) for simplicity.</p>
+
+<p>Below are examples of various einsum operations. For more details on attention with einsum, see a separate blog post <a href="/blogs/2022-11/illustrated-attention/">The Illustrated Attention via Einstein Summation</a>.</p>
+
+<div class="col-sm mt-3 mt-md-0" style="max-width: 80%; margin-left: auto; margin-right: auto">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/einsum.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Einsum operations</figcaption>
+
+</figure>
+
+</div>
+
+<h2 id="e-attention-and-linear-attention">E. Attention and Linear Attention</h2>
+
+<!-- We will describe both attention <a class="citation" href="#attention">(Vaswani et al., 2017)</a> and linear attention <a class="citation" href="#linear-attention">(Katharopoulos et al., 2020)</a> in terms of einstein sum which will provide a concise notation on what dimension is being reduced (summed), and can help us understand how the different tensors interact together to compose the output.
+-->
+<p>In this section, we will describe both attention <a class="citation" href="#attention">(Vaswani et al., 2017)</a> and linear attention <a class="citation" href="#linear-attention">(Katharopoulos et al., 2020)</a>. Let \(\sigma\) be a non linear operator where we may denote \(\sigma_L\) to emphasize that the operation \(\sigma\) is non linear over axis \(L\). 
+We use the same notation as in the last section where both \(k,v\) are the head dimension index for key and value.  We drop the batch dimension for simplicity.</p>
+
+<!-- $$k,v = \frac{d}{h}$$, we denote them with different symbols. 
+-->
+<!-- Let $$h$$ be the number of heads, $$k,v$$ be the head size (hidden dimension divided by number of heads), $$m$$ be the key/value length, and $$n$$ be the query length. The values of $$n$$ and $$m$$ are the same during training but they can be different during inference, hence denote them with different symbols to make it clear. Similarly for the head dimension $$k,v = \frac{d}{h}$$, we denote them with different symbols. We drop the batch dimension for simplicity.
+-->
+
+<p>With this notation, the attention operation <a class="citation" href="#attention">(Vaswani et al., 2017)</a> can be written as</p>
+
+\[\begin{align*}
+O_{hnv} &amp;= \sum_{m=0}^n V_{hmv} \ \sigma_m \left( \sum_{k} Q_{hnk} K_{hmk} \right) \\
+&amp;= \sum_{m=0}^n V_{hmv} \  \sigma_m \left( A_{hmn} \right) \\
+&amp;= \sum_{m=0}^n V_{hmv} \ W_{hmn}
+\end{align*}\]
+
+<p>The causality of attention is reflected in the summation over \(m\), which is the key length. That is, the query at position \(n\) can only attend to the keys up to position \(n\). Note that we omit the multiplicative term \(\frac{1}{\sqrt{d}}\) for \(\sum_{k=1}^d Q_{hnk} K_{hmk}\) for simplicity.
+<!-- We also omit explicit causal bias in this case since it can be absorbed into the non linear function  $$\sigma_m$$.
+-->
+More details on attention can be found in <a href="/blogs/2022-11/illustrated-attention/">The Illustrated Attention via Einstein Summation</a>.</p>
+
+<h3 id="linear-attention">Linear Attention</h3>
+<p>If \(\sigma_m\) is an identity function<sup id="fnref:attention_full" role="doc-noteref"><a href="#fn:attention_full" class="footnote" rel="footnote">11</a></sup>, we can rearrange things where \(K\) and \(V\) equivalently interact with each other first. That is,</p>
+
+\[\begin{align*}
+O_{hnv} &amp;= \sum_{m=0}^n V_{hmv}  \left( \sum_{k} Q_{hnk} K_{hmk} \right) \\ 
+&amp;= \sum_k Q_{hnk} \left( \sum_{m=0}^n V_{hmv} K_{hmk} \right)
+\end{align*}\]
+
+<p>This is a fully linear system given \(Q, K,V\). We can introduce some non linearity over the key length back by replacing \(K\) and \(Q\) with \(K'=\phi(K)\) and \(Q' = \phi(Q)\), where \(\phi\) is a non linear operator over axis \(m\) or \(n\). 
+<!-- This is the idea behind linear attention <a class="citation" href="#linear-attention">(Katharopoulos et al., 2020)</a>. --></p>
+
+\[\begin{align*}
+O^{\text{Linear Attention}}_{hnv} &amp;= \sum_{m=0}^n V_{hmv}  \left( \sum_{k} Q'_{hnk} K'_{hmk} \right) \\
+&amp;= \sum_k Q'_{hnk} \left( \sum_{m=0}^n V_{hmv} K'_{hmk} \right)
+\end{align*}\]
+
+<p>Observe that \(\left( \sum_{m=0}^n V_{hmv} K'_{hmk} \right)\) reduces over dimension \(m\), the key/value length or context length. This means that no matter how long the sequence is, this term has the same dimensionality, and the evolution as context length increases is entirely via addition. Also, observe that</p>
+
+\[\begin{align*}
+S_{hkv}(n) &amp;= \sum_{m=0}^{n} V_{hmv} K'_{hmk} \\
+&amp;= \sum_{m=0}^{n-1} V_{hmv} K'_{hmk} + V_{h(m=n)v} K'_{hLk} \\
+&amp;=  S_{hkv}(n-1) + V_{h(m=n)v} K'_{h(m=n)k}
+\end{align*}\]
+
+<p>which means that the subsequent spatial step rolls into the state vector \(S_{hkv}\), which is a recurrent property. Hence, linear attention <strong>can be seen as a recurrent operation</strong> and helps connect the traditional attention with RNNs.</p>
+
+<p>Note that in the linear attention paper <a class="citation" href="#linear-attention">(Katharopoulos et al., 2020)</a>, the author motivates the linearization from the perspective of kernel methods. That is, we can view \(\sigma_m \left( \langle Q,K \rangle \right)\) as \(\text{Kernel}(Q,K)\), which is equivalent to \(\langle \phi(Q) , \phi(K) \rangle\) for some feature map \(\phi\). In the case of softmax, this corresponds to the exponential kernel where \(\phi\) is an infinite dimensional feature map. Then, the author proposed an alternate feature map \(\phi'\) that is finite dimensional, for instance, the exponential linear unit \(\phi'(x) = \text{elu}(x) + 1\).</p>
+
+<div class="col-sm mt-3 mt-md-0">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/attention.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Attention and Linear Attention</figcaption>
+
+</figure>
+
+</div>
+
+<!--
+Ben: TODO
+
+where is causality?
+-->
+
+<h3 id="notes-and-observations">Notes and Observations</h3>
+
+<ul>
+  <li>The difference between transformer attention and linear attention is the order of reduction and the non linearity operation along the length dimension.</li>
+  <li>
+    <p>Linear attention inspires the H3 architecture choice where the difference is the map \(\phi_m(K)\) where \(\phi_m\) in H3 is based on a state space model.</p>
+  </li>
+  <li>
+    <p>In the traditional attention, \(A = \langle K,Q \rangle\) is an outer product with respect to \(m\) and \(n\). However, in linear attention, \(S = \langle V, K \rangle\) is an outer product with respect to the head dimension \(k\) and \(v\).</p>
+  </li>
+  <li>
+    <p>Therefore, in linear attention, the quadratic complexity is shifted to the head dimension (\(\Theta(kv)\)) in \(\sum_m V_{hmv} K'_{hmk}\) with linear complexity in sequence length. This is in constrast to the traditional attention, we have a quadratic complexity in length (\(\Theta(mn) = \Theta(L^2)\)) in the expression \(\sum_k Q_{hnk} K_{hmk}\) but linear complexity in the head dimension. This is due to the artefact of the order of operations: whether we interact \(K\) and \(V\) first or \(Q\) and \(K\) first.</p>
+  </li>
+  <li>
+    <p>For linear attention, the term \(S_{hkv}(\ell)\) depends implicitly on the length (even though the different length results in the same dimension of this state tensor). During training, \(S_{hkv}(\ell)\) needs to be computed for every \(\ell=0,\dots, L-1\) for causality. That is, \(O_{hnv}\) is computed as \(O_{hnv} = \sum_k Q'_{hnk} S_{hkv}(n)\). This is in contrast to traditional attention where \(O_{hnv}\) is computed as \(O_{hnv} = \sum_m V_{hmv} W'_{hmn}\) where the term \(W'_{hmn}\) has associated contextual representation for each \(n\) explicitly.</p>
+  </li>
+  <li>The recurrence property in linear attention allows incremental decoding in constant time, if we already have the state up to length \(L-1\) and want to process the next step \(L\). This is in contrast of the linear time complexity in traditional attention.</li>
+</ul>
+
+<!--
+The paper replaces MLP/GLU + MHSA with 2 GAUs
+
+
+The paper then uses linear attention over chunks + local quadratic attention within each chunk.
+
+
+-->
+
+<hr />
+
+<h1 id="long-convolution-models">Long Convolution Models</h1>
+
+<h2 id="hippo-framework-for-history-representation-via-state-space">HiPPO Framework for History Representation via State Space</h2>
+
+<p>The HiPPO matrices <a class="citation" href="#hippo">(Gu et al., 2020; Voelker et al., 2019)</a> are the \(A,B\) matrices associated with state space models, obtained for <code class="language-plaintext highlighter-rouge">input memorization</code> problem where we want the state \(\vec{x}_{t}\) to capture \(u_{t' \le t}\), the entire input<sup id="fnref:function-vs-sequence" role="doc-noteref"><a href="#fn:function-vs-sequence" class="footnote" rel="footnote">12</a></sup> up to time \(t\). This can be very useful for long range modeling where we can build a contualized representation where the <strong>output feature at a given time step represents the entire past</strong>. In this section, we will walk through how to approach this problem.</p>
+
+<p>First, the state vector \(\vec{x}_{t}\) in state space models is \(N\) dimensional. We want such a vector at time \(t\) to represent the entire past of the input from time \(0\) to \(t\). What would be a good way to represent the entire history in an \(N\) dimensional vector, where the history can be arbitrarily long?</p>
+
+<p>The key is to think about it in function space, where the input vector \((u_0, u_1, \dots, u_t)\) is interpreted as evenly spaced points from a continuous time function \(u(t')\) defined up to \(t' = t\). Then, we choose the definition of the state space \(\vec{x}\) to represent the first \(N\) coefficients according to some orthonormal basis in the function space. Such definition will yield particular matrices \(A,B,C\).</p>
+
+<!--
+ where we take the first $$N$$ coefficients (larger $$N$$ approximate the functions better).
+-->
+
+<!-- How do we use a finite vector to represent an entire function? (Hint: think about orthonormal basis in function space). What if we want to weigh input points $$u(t')$$ differently (e.g. emphasize recent more than distant past)?
+-->
+
+<!--
+For given dynamics that we want to model via state space (e.g. harmonic oscillator, or in this case, input memorization), we are free to choose the definition of such state vector $$\vec{x}$$ and the matrices $$A,B$$. The states can represent the coefficients according to some orthonormal basis where we take the first $$N$$ coefficients (larger $$N$$ approximate the functions better).
+-->
+
+<div class="col-sm-1 mt-3 mt-md-1" style="max-width: 100%; margin-left: auto; margin-right: auto;">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/HiPPO.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">HiPPO Framework -- Illustration from HiPPO paper.</figcaption>
+
+</figure>
+
+</div>
+
+<p>Below, we outline the derivation steps of the HiPPO framework.</p>
 
 <ul>
   <li>
-    <p>We need to define how we want to weigh different points. For the Hippo matrix that can perform long range modeling, a sensible choice would be to use uniform weighting so that we can take signals from points far away. In a more technical term, we choose the appropriate measure that defines the integral, which defines the inner product for the Hilbert space. For uniform weighting, we can use the Lebesgue measure, scaled such that the total measure is 1 from time \(0\) to \(t\) when we want to memorize input up to time \(t\). Let’s call this measure \(\mu_{t}\), which can depend on \(t\).</p>
+    <p>Define how we want to weigh different points in the history. For long range modeling, a sensible choice would be to use uniform weighting so that we can take signals from points far away. In a more technical term, we choose the appropriate measure that defines the integral, which defines the inner product for the Hilbert space. For uniform weighting, we can use a measure scaled such that the total measure is 1 from time \(0\) to \(t\) when we want to memorize input up to time \(t\). Let’s call this measure \(\mu_{t} = \frac{1}{t} \mathbb{1}_{[0,t]}\), which depends on \(t\).</p>
   </li>
   <li>
     <p>Based on inner product (which incorporates the weight), we can then choose an orthonormal basis. For uniform weighting, the (scaled) Legendre polynomials form an orthonormal basis \(\{ g_n \}_{n=0}^{\infty}\) with respect to the inner product \(\langle \cdot, \cdot \rangle_{\mu_{t}}\).</p>
   </li>
   <li>
-    <p>We choose the \(N-\)dimensional state vector \(x(t)\) to be exactly the coefficients \(c_0(t), c_1(t), \dots, c_{N-1}(t)\) where \(c_n(t) = \langle g_n , u_{t'\le t} \rangle_{\mu_{t}}\). The function representation \(g_{t}\) via the Legendre polynomials is \(g_{\le t}(t') = \sum_{n=0}^{N-1} c_n(t) g_n(t')\).</p>
+    <p>We choose the \(N\) dimensional state vector \(x(t)\) to be exactly the coefficients \(c_0(t), c_1(t), \dots, c_{N-1}(t)\) where \(c_n(t) = \langle g_n , u_{t'\le t} \rangle_{\mu_{t}}\). The function representation via the Legendre polynomials is \(g_{\le t}(t') = \sum_{n=0}^{N-1} c_n(t) g_n(t')\).</p>
   </li>
   <li>
-    <p>Since these coefficients correspond to the projection of \(u_{t'\le t}\) onto the basis \(\{ g_n \}_{n=0}^{\infty}\), the function representation minimizes the distance between \(g_{\le t}\) and the true input \(u_{\le t}\). In other words, the function represented by the coefficients \(c(t)\) is the best N-dimensional approximation of \(u_{\le t}\) in the Hilbert space \(\mathcal{H}\) with respect to the inner product \(\langle \cdot, \cdot \rangle_{\mu_{t}}\). As \(N\) becomes larger, the distance becomes arbitrarily small.</p>
+    <p>Since these \(N\) coefficients correspond to the projection of \(u_{t'\le t}\) onto the basis \(\{ g_n \}_{n=0}^{N-1}\), the function representation minimizes the distance between \(g_{\le t}\) and the true input \(u_{\le t}\). In other words, the function represented by the coefficients \(c(t)\) is the best N-dimensional approximation of \(u_{\le t}\) in the Hilbert space \(\mathcal{H}\) with respect to the inner product \(\langle \cdot, \cdot \rangle_{\mu_{t}}\). As \(N\) becomes larger, the distance becomes arbitrarily small.</p>
   </li>
   <li>
-    <p>With this definition \(c_n(t)\), we can show that \(\frac{d}{dt} c_n(t) = \frac{d}{dt} \langle g_n, u_{\le t} \rangle\) can be expressed a linear combination of \(c_m(t)\) and \(u(t)\), which means it is a state space model! The details can be found in <a class="citation" href="#hippo">(Gu et al., 2020)</a>, Appendix D. There are derivations for different measures as well.</p>
+    <p>With this definition \(c_n(t)\), we can show that \(\frac{d}{dt} c_n(t)\) or \(\frac{d}{dt} \langle g_n, u_{\le t} \rangle\) can be expressed a linear combination of \(c_m(t)\) and \(u(t)\), which means that it is a linear state space model! The details can be found in <a class="citation" href="#hippo">(Gu et al., 2020)</a>, Appendix D, where there are derivations for different measures as well.</p>
   </li>
   <li>
-    <p>That is, in the vectorized form, the derivative of the state vector \(x\) can be written as</p>
+    <p>In the vectorized form, the derivative of the state vector \(x\) where \(x_t\) is the coefficient for Legendre orthonormal polynomials that best represent \(\textbf{u}_{\le t}\) can be written as</p>
   </li>
 </ul>
 
@@ -717,21 +1121,39 @@ y_k &amp;=  \sum_{i=0}^{k} \bar{K}_{k-i} u_i + 0 \\
 
 <p>where</p>
 
+<!--
+$$
+\begin{align*}
+A(t) &= - \frac{1}{t} A^{\text{HiPPO}} \\
+B(t) &= \frac{1}{t} B^{\text{HiPPO}} \\
+\end{align*}
+$$
+-->
+
 \[\begin{align*}
-A(t) &amp;= - \frac{1}{t} A \\
-B(t) &amp;= \frac{1}{t} B \\
+A(t) &amp;= \frac{1}{t} A^{\text{HiPPO}} \\
+B(t) &amp;= \frac{1}{t} B^{\text{HiPPO}} \\
 \end{align*}\]
 
-<p>and \(A,B\) are the associated Hippo matrices obtained from the derivation outlined above.</p>
+<p>and \(A^{\text{HiPPO}},B^{\text{HiPPO}}\) are the associated HiPPO matrices obtained from the derivation outlined above.</p>
+
+<!--
+In particular this is the HiPPO-LegS for scaled legendre 
+
+corresponding to the measure 1/t 1_{[0,t]}, which means equal weight up to time 0 to t.
+
+
+for the exponentially warped, it essentially means omega(t) = e_{-t}
+-->
 
 \[\begin{align*}
-A_{ij} &amp;= \begin{cases}
+A^{\text{HiPPO}}_{ij} &amp;= - \begin{cases}
 (2i+1)^{1/2} (2j+1)^{1/2}   &amp; \text{if   } \ i &gt; j \\
 i+1                         &amp; \text{if   } \ i = j  \\
 0                           &amp; \text{if   } \ i &lt; j
 \end{cases}
 \\
-B_i &amp;= (2i+1)^{1/2}
+B^{\text{HiPPO}}_i &amp;= (2i+1)^{1/2}
 \end{align*}\]
 
 <ul>
@@ -739,7 +1161,7 @@ B_i &amp;= (2i+1)^{1/2}
     <p>This is a <strong>time-varying</strong> state space model since the \(A(t)\) matrix depends on \(t\)! Due to this time dependence, it no longer be expressed as a convolution.</p>
   </li>
   <li>
-    <p>However, there is a remedy! Dropping \(\frac{1}{t}\) actually works in practice and enables long range modeling <a class="citation" href="#s4">(Gu et al., 2022; Voelker et al., 2019)</a>, and according to <a class="citation" href="#train_hippo">(Gu et al., 2023)</a>, we can show that this time-invariant version is a valid state space model that corresponds to using exponentially warped Legendre polynomials. Very cool!</p>
+    <p>However, dropping \(\frac{1}{t}\) actually works in practice and enables long range modeling in S4 model <a class="citation" href="#s4">(Gu et al., 2022; Voelker et al., 2019)</a>. According to <a class="citation" href="#train_hippo">(Gu et al., 2023)</a>, we can show that this time-invariant version is a valid state space model that corresponds to using exponentially warped Legendre polynomials. Therefore, using \(A^{\text{HiPPO}}\) directly is a valid time-indendendent state space model.</p>
   </li>
 </ul>
 
@@ -747,82 +1169,315 @@ B_i &amp;= (2i+1)^{1/2}
 You might be thinking, how do we represent an entire function? The answer is to use a special state space model setup where the state space dynamics is such that (1) the state represent the coefficients of a dense basis in function space and (2) the dynamics of the state space is such that the function induced by the coefficients is close to the input function. Let's see this in equations and also in diagrams.
 -->
 
-<ul>
-  <li>The next challenge, to be addressed in S4 <a class="citation" href="#s4">(Gu et al., 2022)</a> and diagonal S4 <a class="citation" href="#s4d">(Gupta et al., 2022)</a>, is how to compute the convolution kernel \(\mathbf{\bar{K}}\) efficiently. Observe that the convolution kernel requires obtaining \(A^\ell\) for all \(\ell = 0, \dots, L\). Since \(A\) is an \(N \times N\) matrix, and we need to do it \(L\) times, the computational complexity with naive matrix multiplication is \(O(N^2L)\). The paper S4 <a class="citation" href="#s4">(Gu et al., 2022)</a> describes how to do this efficiently in \(O(N+L)\) and S4d <a class="citation" href="#s4d">(Gupta et al., 2022)</a> describes how to do this even more efficiently by using an approximate diagonal matrix \(A\). We will omit the proofs in this blog post.</li>
-</ul>
-
-<p>** TODO – see how efficient for the diagonal case. and what big O tilde really means</p>
-
-<h2 id="d-einstein-summation-for-general-tensor-operations">D. Einstein Summation for General Tensor Operations</h2>
-
-<p>We will describe both attention and linear attention in terms of einstein sum which will provide a concise notation on what dimension is being reduced (summed), and can help us understand how the different tensors <code class="language-plaintext highlighter-rouge">flow</code> together to compose the output.</p>
-
-<p>We denote \(\sum_{d}\), for example, to be a summation along the \(d\) axis. Let \(\sigma\) be a non linear operator where we may denote \(\sigma_L\) to emphasize that the operation \(\sigma\) is non linear over dimension \(L\) in this case. In short, attention operation can be written as</p>
-
-\[\begin{align*}
-O_{hm} &amp;= \sum_m V_{hmv} \ \sigma_m \left( \sum_{k} Q_{hnk} K_{hmk} \right) \\
-&amp;= \sum_m V_{hmv} \  \sigma_m \left( W_{hmn} \right) \\
-&amp;= \sum_m V_{hmv} \ W'_{hmn}
-\end{align*}\]
-
-<p>If \(\sigma_m\) is identity, we can rearrange things where K and V  equivalently interact with each other first. That is,</p>
-
-\[\begin{align*}
-O_{hm} &amp;= \sum_m V_{hmv}  \left( \sum_{k} Q_{hnk} K_{hmk} \right) \\ 
-&amp;= \sum_k Q_{hnk} \left( \sum_m V_{hmv} K_{hmk} \right)
-\end{align*}\]
-
-<p>This is a fully linear system given \(Q, K,V\). We can introduce some non linearity over the key length back by replacing \(K\) and \(Q\) with \(K'=\phi(K)\) and \(Q' = \phi(Q)\), where \(\phi\) is a non linear operator over axis \(m\). This is the idea behind linear attention (missing reference).</p>
-
-\[\begin{align*}
-O^{\text{Linear Attention}}_{hm} &amp;= \sum_m V_{hmv}  \left( \sum_{k} Q'_{hnk} K'_{hmk} \right) \\
-&amp;= \sum_k Q'_{hnk} \left( \sum_m V_{hmv} K'_{hmk} \right)
-\end{align*}\]
-
-<h2 id="e-attention-and-linear-attention">E. Attention and Linear Attention</h2>
-
-<hr />
-<hr />
-<hr />
-
-<h1 id="long-convolution-models">Long Convolution Models</h1>
-
-<h2 id="hippo-matrix-for-history-representation-via-state-space-models">Hippo Matrix for History Representation via State Space Models</h2>
-
 <h2 id="s4-structured-state-space">S4: Structured State Space</h2>
 
-<h2 id="h3-hungry-hungry-hippos">H3: Hungry Hungry Hippos</h2>
+<p>From the previous section, the HiPPO matrix provides a state space model definition that can map input signal \(u(t)\) to an output signal \(o(t)\) that captures the past history at each time step.</p>
 
-<h2 id="gss-gated-state-space-models">GSS: Gated State Space Models</h2>
+<p>The next challenge to be addressed is how to <strong>compute the convolution kernel</strong> \(\mathbf{\bar{K}}\) for state space models efficiently. Once we have \(\mathbf{\bar{K}}\), computing the output from the input is fast via the convolution theorem and Fast Fourier Transform.</p>
 
-<h2 id="hyena-hierarchy">Hyena Hierarchy:</h2>
+<p>Recall that the convolution kernel for state space models can be written as:</p>
+
+\[\begin{align*}
+\mathbf{\bar{K}} &amp;= \sum_{\ell=0}^{L-1} \bar{C} \bar{A}^{\ell} \bar{B} \\
+\end{align*}\]
+
+<p>where \(\bar{A}\) is the associated matrix for discrete state space dynamics of \(A\).</p>
+
+<p>That is, the convolution kernel requires obtaining \(\bar{A}^\ell\) for all \(\ell = 0, \dots, L\). Since \(\bar{A}\) is an \(N \times N\) matrix, and we need to do it \(L\) times, the computational complexity with naive matrix multiplication is \(O(N^2L)\). Here are the considerations outlined in the S4 paper.</p>
 
 <ul>
   <li>
-    <p>Implicit convolution means that given an input \(x\), the convolution filter \(h_\theta(x)\) depends on \(x\) and also potentially some parameters \(\thetea\).</p>
+    <p>At first glance, attempting to diagonalize \(A\) seems reasonable since if \(A = V D V^{-1}\) for some diagonal matrix \(D\), then \(A^\ell = V D^\ell V^{-1}\) where \(D^\ell\) can be done in \(O(\ell)\) time. However, the authors show that this is not numerically stable since entries of \(V\) that diagonalize the HiPPO matrices are exponentially large in state size \(N\).</p>
   </li>
   <li>
-    <p>The position encodings used is illustrated in Figure ().</p>
+    <p>A more ideal scenario is if \(A\) were diagonalizable by a unitary matrix \(V\). Note that a unitary matrix \(V\) has properties \(V V^\dagger = V^\dagger V = I\) and is very well-conditioned, hence will not suffer numerical instabilities. Such a matrix that is diagonalizable by a unitary matrix is called normal.</p>
   </li>
-  <li></li>
+  <li>
+    <p>The HiPPO matrix is <em>not</em> normal. However, according to Theorem 1 of <a class="citation" href="#s4">(Gu et al., 2022)</a>, it can be written as normal plus low rank (NPLR).</p>
+  </li>
+  <li>
+    <p>The paper S4 developed an algorithm to compute the convolution kernel \(\bar{K}\) specifically for state space models whose \(A\) is NLPR. (See algorithm 1 in <a class="citation" href="#s4">(Gu et al., 2022)</a>) Specifically, Theorem 3 in <a class="citation" href="#s4">(Gu et al., 2022)</a> states that \(\bar{K}\) can be obtained with \(\tilde{O}(N + L)\) operations and \(O(N+L)\).</p>
+  </li>
+  <li>
+    <p>Therefore, we now have a method to obtain the contextualized output from the input quite efficiently. First, by obtaining the convolution kernel \(\bar{K}\) which costs \(\tilde{O}(N+L)\), then compute the output via the convolution theorem and FFT, which costs \(O(L \log L)\).</p>
+  </li>
+  <li>
+    <p>Overall, the model performs well on various long range modeling tasks, including the Long Range Arena benchmark <a class="citation" href="#long_range_arena">(Tay et al., 2021)</a>.</p>
+  </li>
+  <li>
+    <p>More details on the proofs are covered extensively in the blog post <a href="https://srush.github.io/annotated-s4/">The Annotated S4</a> as well as the original paper.</p>
+  </li>
 </ul>
 
-<h2 id="a-unified-perspective-on-long-convolution-models">A Unified Perspective on Long Convolution Models</h2>
+<h2 id="diagonal-state-spaces">Diagonal State Spaces</h2>
 
-<p>Key ideas to highlight</p>
+<p>Interestingly, <a class="citation" href="#dss">(Gupta et al., 2022)</a> also shows that the using the normal part of the Hippo matrix without the low rank correction also works well in practice, with performance matching the original S4.</p>
 
 <ul>
-  <li>Need to show attention and convolution as data-dependent operators very clearly.</li>
+  <li>Normal plus low rank (NPLR) in S4 can also be conjugated into a diagonal plus low rank matrix (DPLR). That is,</li>
 </ul>
 
-<h3 id="observations">Observations</h3>
+\[A = V D V^* - PQ^T = V ( D - (V^*P) (V^*Q)^* ) V^*\]
 
-<p>Interesting observations</p>
 <ul>
-  <li>We can see the attention in transformers as a data-dependent operator, controlled by query and key. Such data-dependent operator acts on then value vector V, which then produces the output O.</li>
-  <li>Convolution models can also be seen as data-dependent operators, where the operator is controlled by the input function. The key difference here is that due to the convolution theorem and Fast Fourier Transform, the operator can be computed in $O(L log L)$ instead of $O(L^2)$.</li>
-  <li></li>
+  <li>
+    <p>In general, the state space dynamics described by (\(A,B,C\)) or (\(V^{-1} AV, V^{-1}B, CV\)) are equivalent since it yields the same convolution kernel \(\bar{K}\) and can be seen as change of basis of the internal representation of the states \(X\).</p>
+  </li>
+  <li>
+    <p>That is, we can equivalently use \(D - (V^*P) (V^*Q)^*\) as the Hippo matrix. In the diagonal case, we use only \(D\). This diagonal representation drastically simplifies the algorithm.</p>
+  </li>
+  <li>
+    <p>Practically, the paper emphasizes the importance of using the diagonal part of HiPPO matrix’s DLPR representation instead of random initialization, where the random initialization is shown to be less effective. In addition, there are considerations to constrain the real parts of the diagonals (the diagonals are the eigenvalues) to be non positive, which is reasoned to be essentially for long range, otherwise \(D^\ell\) and values of \(\bar{K}\) can be arbitrarily large as the length increases.</p>
+  </li>
+  <li>
+    <p>Later, in <a class="citation" href="#s4d">(Gu et al., 2022)</a>, the authors show that the diagonal version of the HiPPO matrix is a noisy approximation and becomes closer as the dimension of internal state space \(N\) approaches infinity. This does not hold for any NPLR matrix, but arises from the structural properties of the HiPPO matrix.</p>
+  </li>
 </ul>
+
+<!--
+Draft version:
+
+The paper S4 shows that the time-invariant Hippo matrix (for Legendre polynomials) can be written as a normal matrix + low rank matrix. (a matrix is normal if and only if it can be diagonalized by a unitary matrix.) Hence, $$\bar{A}^^\ell $$ can be computed efficiently. 
+
+Later, <a class="citation" href="#dss">(Gupta et al., 2022)</a> also shows that the using the normal part of the Hippo matrix without the low rank also works well in practice. <a class="citation" href="#s4d">(Gu et al., 2022)</a> shows that the diagonal version of the Hippo matrix is equivalent to the case where the dimension of the internal state space is infinite. 
+
+In addition, almost all state space is equivalent to a diagonal state space over a complex numbers, and proposed another diagonal variant called S4d.
+
+Note that S4, DSS and S4d all emphasize the importance of initialization with specific Hippo-inspired matrices.
+
+
+
+-->
+
+<h2 id="gss-gated-state-space-models-and-gated-attention-units">GSS: Gated State Space Models and Gated Attention Units</h2>
+
+<!-- The key idea here is to use gating to allow model to be contextualized over a reduced dimensionality.  --- gating is not key for this. not sure why I wrote this sentence
+-->
+
+<!--
+* GAU proposes an approach to approximate quadratic attention by using a variant with linear complexity instead, via chunking and (1) using quadratic attention within each chunk and (2) linear attention across chunks.
+-->
+
+<p>Gated State Space models (GSS) <a class="citation" href="#gss">(Mehta et al., 2023)</a> builds on two lines of work. First is the state space models, where the paper adopts the diagonal state space.</p>
+
+<p>Second is the gating mechanism as an alternative activation function which has been shown to improve model performance and can be seen as a multiplicative residual connection, allowing the gradients to flow back freely. The gating mechanism also allows using weaker attention mechanism without quality degradation. We cover the literature of gating mechanism in <a href="#gating">Gating</a> section. <!-- TODO --></p>
+
+<p>In particular, GSS adopts Gated Attention Units (GAU) <a class="citation" href="#gated_attention_units">(Hua et al., 2022)</a> with a diagonal state space model instead of the traditional \(L^2\) attention, together with the input-controlled gating mechanism proposed in GAU.</p>
+
+<p>Below is a simplified version of the GSS model (without dimensionality reduction before the state space model). Given an input \(X\), the model performs linear projection over hidden dimension into \(U,V\) tensors.</p>
+
+\[U = \phi_u(X W_u), V = \phi_v(X W_v)\]
+
+<p>Then, the output is computed as</p>
+
+\[O = (U \odot \hat{V})W_o\]
+
+<p>where \(\hat{V}\) is the contextualized representation over spatial domain.</p>
+
+\[\hat{V} = \text{DSS}(V)\]
+
+<p>In contrast, an alternate contextualized representation is the attention mechanism where \(\hat{V} = \langle A,  V \rangle\) and \(A = \text{softmax}(\langle Q, K \rangle + \text{bias})\).</p>
+
+<p>Below are some additional observations from the paper:</p>
+
+<ul>
+  <li>
+    <p>The GSS paper conducted experiments aimed for language modeling and where the compute is of much larger scale that previous work on state-space models.</p>
+  </li>
+  <li>
+    <p>Contrary to the previous work on state space models, this paper found that for language modeling tasks, initialization does <strong>not</strong> matter significantly. This is in contrast to the sensitivity of initialization in <a class="citation" href="#s4">(Gu et al., 2022; Gupta et al., 2022; Gu et al., 2022)</a>.</p>
+  </li>
+  <li>
+    <p>The paper observed consistent generalization to longer inputs; while the training uses up to 4k length, the model is evaluated on sequence lengths up to 65k where the performance becomes significantly better with longer context.</p>
+  </li>
+  <li>
+    <p>Aside: There are a few considerations in the paper that makes the model runs faster on accelerators by projecting the input into lower dimensionality before the state space model stage. We omit this step for simplicity. See the paper for extensive comparison with Block Recurrent Transformers <a class="citation" href="#block_recurrent_transformers">(Hutchins et al., 2022)</a> and great coverage of related work on long range modeling transformer architectures.</p>
+  </li>
+</ul>
+
+<!--
+, either due to the scale of the experiment or the use of gating. (find out what the paper says exactly)
+-->
+
+<!--
+
+* GSS replaces the attention or approximated attention in GAU entirely by a diagonal state space model. This is the alternative way to build contextual representation.
+
+
+* The intuition for gating is that the gating mechanism alleviates the burden of attention or weakens the role of attention, which enables approximated attention without much quality loss. The paper suggests that other approximated attention suffers quality degradation. 
+
+* GSS paper found that DSS runs slow on TPUs and therefore suggests doing DSS on reduced dimensionality.
+
+Essentially, with hidden dimension $$d$$, previous models typically use $$d$$ copies of the the structured state space. In essence, S4 performs state space modeling on 1-dimensional input for $$d$$ times, which then yield d-dimensional output. GSS project the hidden dimension to a lower intermediate dimension $$d' < d$$ before using state space modeling with $$d'$$ copies.
+
+* GLU is an improved MLP augmented with gating. 
+
+* Gating () have been shown to improve transformers in (missing reference)
+<a class="citation" href="#transformer_modifications">(Narang et al., 2021)</a> <a class="citation" href="#glam">(Du et al., 2022)</a> <a class="citation" href="#lamda">(Thoppilan et al., 2022)</a>
+
+* BenA -- need to really understand the argument for gating.
+
+* The paper focuses soly on the task of autoregressive sequence modeling.
+
+-->
+
+<h2 id="h3-hungry-hungry-hippos">H3: Hungry Hungry HiPPOs</h2>
+
+<p>The goal for H3 is to address the gap between previous state space models (S4, S4d, etc.) and transformers. The paper to improve (1) the expressivity and (2) the computational efficiency of state space models.</p>
+
+<h3 id="improved-expressivity">Improved Expressivity</h3>
+
+<p>H3 draws inspiration from the attention mechanism in transformers and long range modeling with state space models.</p>
+
+<ul>
+  <li>
+    <p>Starting from the input to the current layer, we project it to the query \(Q\), key \(K\) and value \(V\) tensors, similar to the input projections in transformers attention.</p>
+  </li>
+  <li>
+    <p>Perform shift state space model on \(K\). This can be seen as a non linear operation on the length axis of \(K\), similar to how the linear attention uses a non linear operation on individual tensors (instead of applying non linear function on entire \(\langle Q,K \rangle\) like in the traditional attention).
+The motivation for the shift SSM operation is due to the observation that SSMs struggle with recalling earlier tokens and comparing tokens across sequences.</p>
+  </li>
+  <li>Drawing inspiration from the linear attention model where \(K\) and \(V\) interact first, we perform a diagonal SSM on \(\langle K, V\rangle\).</li>
+  <li>Multiply with \(Q\) to obtain the output.</li>
+</ul>
+
+<p>Here, we offer two illustrations. The first one considers the case of single input single output (SISO), where the interaction between \(K,V,Q\) tensors are via elementwise multiplication.</p>
+
+<p>Another illustration is in the batch case where we illustrate how we split the input into multiple heads, and how the interaction between \(K,V,Q\) tensors are via einsum. Then, the head outputs are grouped together from all heads to final output.</p>
+
+<h3 id="improved-computational-efficiency">Improved Computational Efficiency</h3>
+<ul>
+  <li>The H3 paper is the first to develop fused kernels specialized for convolution and FFT to increase the hardware utilization.</li>
+  <li>The paper proposed a state passing algorithm that allows SSM to scale to very large context length.
+<!-- (after all, what controls the runtime is often about the memory IO rather than the actual FLOPs).
+--></li>
+</ul>
+
+<h2 id="hyena-hierarchy">Hyena Hierarchy</h2>
+
+<!--
+* BenA -- does the convolution kernel really depend on the data though? it seems to only depend on the position embeddings. For state space models, the kernel depends on A,B,C which are parameters.. so I guess it does not depend on the data and is more explicit
+-->
+
+<p>Hyena model takes a departure from the state space literature where the dynamics are explicitly defined by the matrices \(A,B,C\). Instead, the Hyena model uses a convolutional approach where the convolution kernels are constructed based on a learned mapping from position embeddings. This is considered an implicit<sup id="fnref:implicit-convolution" role="doc-noteref"><a href="#fn:implicit-convolution" class="footnote" rel="footnote">13</a></sup> convolution as opposed to explicit convolution where the convolution kernel does not necessarily depend on the data.</p>
+
+<!--
+* The position encodings used is illustrated in Figure ().
+-->
+<ul>
+  <li>
+    <p>A recurrent model can be seen as a global convolution model. However, the reverse is not true. The Hyena model is a global convolution model that is not recurrent.</p>
+  </li>
+  <li>
+    <p>Another key aspect of the Hyena model is the generalization of how we think of projected layer inputs. In models such as attention or H3, we think of the projected layer inputs as $Q,K,V$ tensors. In the Hyena model, these projected layer inputs are generalized to be $M + 1$ copies without any specific interpretation.</p>
+  </li>
+  <li>
+    <p>The Hyena model can be seen as a generalization of the H3, GSS, S4/DSS models.</p>
+  </li>
+  <li>
+    <p>The Hyena paper emphasizes the operator perspective where view the attention or the convolution as a data-dependent operator.</p>
+  </li>
+  <li>
+    <ul>
+      <li>In transformers, such data-dependent operator is controlled by query and key (and is $O(L^2)$). Such data-dependent operator acts on the value vector $V$, which then produces the output $O$.</li>
+    </ul>
+  </li>
+  <li>
+    <ul>
+      <li>Convolution models can also be seen as data-dependent operators, where the operator is controlled by the input function. The key difference here is that due to the convolution theorem and Fast Fourier Transform, the operator can be computed in $O(L \log L)$ instead of $O(L^2)$.</li>
+    </ul>
+  </li>
+</ul>
+
+<!--
+What does implicit mean?
+-->
+
+<h2 id="illustrated-global-convolution-models">Illustrated Global Convolution Models</h2>
+
+<!--
+Mention emphasis on illustrating how different dimensions interact clearly, since this is key for practice.
+
+SSM theory is for vectors not general tensors
+
+for each section before this, perhaps use the figures from paper directly.
+
+
+-->
+
+<ul>
+  <li>
+    <p>The overall goal for the illustration is to precisely describe the specification of various models via diagrams with a consistent notation. By adopting a consistent notation in a unified illustration, we hope to provide a clear picture of how different models are related and how they differ.</p>
+  </li>
+  <li>
+    <p>The diagrams are meant to be as precise as possible, in a sense that one can use it to translate to code without ambiguity (except some constant scaling which are omitted for simplicity). This means we have to portrays the case where the input feature is high-dimensional, in constrast to the single-input single-output description where the context operator deals with a single feature dimension (vector in and vector out).</p>
+  </li>
+  <li>
+    <p>While most of the techniques presented in this blog is about context operator which mixes information along the length axis, in the high-dimensional feature case, there are also crucial steps related to <strong>mixing different feature dimensions</strong> together. This happens at the stage of <code class="language-plaintext highlighter-rouge">reading the input</code> and <code class="language-plaintext highlighter-rouge">writing the output</code>.</p>
+  </li>
+  <li>
+    <ul>
+      <li>For instance, given a layer input \(X_{d \ell}\), we may project it with linear maps to obtain \(Q\) tensor (or \(,K,V\)), where each feature in \(Q\) is a linear combinations of all features in the input. This is the <code class="language-plaintext highlighter-rouge">reading the input</code> step. (See Transformers Circuits <a class="citation" href="#tc_math">(Elhage et al., 2021)</a> for details regarding this view input reading from residual stream). <!-- ADD --></li>
+    </ul>
+  </li>
+  <li>
+    <ul>
+      <li>There can be many channels of these projected inputs. For instance, in transformers, we can see \(Q_{hnk}\) has \(h\) separate channels where each channel operates independently until the writing stage. Each channel input is \(\frac{d}{h}\)-dimensional where \(d\) is the feature dimension of the layer input \(X\).</li>
+    </ul>
+  </li>
+  <li>
+    <ul>
+      <li>In Hyena, a d-dimensional input is projected to \(M+1\) copies of \(\frac{d}{M+1}\) dimensional tensors with \(d\) channels where each channel has \(1\) feature dimension.</li>
+    </ul>
+  </li>
+  <li>
+    <ul>
+      <li>After the different views of inputs (such as \(Q,K,V\)) are obtain, a context operators mixes information along the spatial dimension (length dimension) and produces the output.</li>
+    </ul>
+  </li>
+  <li>
+    <ul>
+      <li>Then, the channel outputs are aggregated together via either simple concat and potentially another linear projection. This is the <code class="language-plaintext highlighter-rouge">output writing</code> step.</li>
+    </ul>
+  </li>
+  <li>Gating can be seen as einsum in general. for instance, \(Lk \odot Lv \to Lkv\) is an element-multiplication along \(L\) and an outer product along \(k,v\) simultaenously. Using this gating mechanism right after a complex operation, especially a non-linear one, may help gradients to flow freely, as hypothesized in the gating literature. (See Appendix <a href="#gating">Gating</a> for more details)</li>
+</ul>
+
+<div class="col-sm-1 mt-3 mt-md-1" style="max-width: 100%; margin-left: auto; margin-right: auto;">
+<figure style="background-color: white;">
+
+  <picture>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/blogs/assets/graphics/convolution/convolution_models.svg" class="img-fluid rounded z-depth-1" width="auto" height="auto" style="padding: 10px;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Illustration of Global Convolution Models</figcaption>
+
+</figure>
+
+</div>
+
+<h2 id="faqs">FAQs</h2>
+
+<ul>
+  <li>Coming soon! (please leave questions below in Gitcus)</li>
+</ul>
+
+<!--
+
+## FAQs
+
+n Q: 
+* A: 
+
+* Q:
+* A:
+
+* Q:
+* A:
+
+-->
 
 <!--
 Observations that we should incorporate.
@@ -845,6 +1500,37 @@ Discrete SSM breaks down at Nyquist frequency (or sampling frequency).
 - show an example that state space can model n'th order diff equations
 
 - 
+
+
+-->
+
+<!--
+Extras
+
+- L sinc(x/L) and Dirac delta
+- periodicity requirement
+- any f(t) can be fourier transformed. no need to be periodic.
+- the base harmonics is the peroid of the entire signals
+
+
+- periodic f can be represented as a sum of harmonics. this is true if we focus on an interval that is not periodic. the sum of harmonics is simply defined on that interval
+
+- nyquist frequency
+
+- diagonal SSM corresponds to change of basis. that is all
+-- emphasize this
+
+
+- eigenvalues -- perhaps it'd be good to analyze the mechanics example with complex eigen values --- see how it corresponds to going indefinitely
+
+
+
+Blog styles
+
+
+- collapsible sections?
+- index consistency. T or L for time
+- add figures from original papers
 
 
 -->
@@ -872,7 +1558,7 @@ Discrete SSM breaks down at Nyquist frequency (or sampling frequency).
 ###########################################################
 -------->
 
-<h4 id="references">References</h4>
+<h3 id="references">References</h3>
 <ol class="bibliography"><li><!-- _layouts/bib.html -->
       <div class="row">
         <div class="col-sm-2 abbr"></div>
@@ -918,12 +1604,25 @@ Discrete SSM breaks down at Nyquist frequency (or sampling frequency).
         <!-- Entry bib key -->
         <div id="s4d" class="col-sm-8">
         <!-- Title -->
-        <div class="title">Diagonal State Spaces are as Effective as Structured State Spaces</div>
+        <div class="title">On the Parameterization and Initialization of Diagonal State Space
+                  Models</div>
         <!-- Author -->
         <div class="author">
         
 
-        Ankit Gupta,&nbsp;Albert Gu,&nbsp;and&nbsp;Jonathan Berant</div>
+        Albert Gu,&nbsp;Karan Goel,&nbsp;Ankit Gupta, and
+          <span class="more-authors" title="click to view 1 more author" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '1 more author' ? 'Christopher Ré' : '1 more author';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">1 more author</span></div>
 
         <!-- Journal/Book title and date -->
         
@@ -1103,6 +1802,158 @@ Discrete SSM breaks down at Nyquist frequency (or sampling frequency).
         <div class="col-sm-2 abbr"></div>
 
         <!-- Entry bib key -->
+        <div id="hyena_dna" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">HyenaDNA: Long-Range Genomic Sequence Modeling at Single Nucleotide
+                  Resolution</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Eric Nguyen,&nbsp;Michael Poli,&nbsp;Marjan Faizi, and
+          <span class="more-authors" title="click to view 10 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '10 more authors' ? 'Armin W. Thomas, Callum Birch-Sykes, Michael Wornow, Aman Patel, Clayton M. Rabideau, Stefano Massaroli, Yoshua Bengio, Stefano Ermon, Stephen A. Baccus, Christopher Ré' : '10 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">10 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>CoRR</em>, 2023
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-doi="10.48550/arXiv.2306.15794" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-doi="10.48550/arXiv.2306.15794" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="attention" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Attention is All you Need</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Ashish Vaswani,&nbsp;Noam Shazeer,&nbsp;Niki Parmar, and
+          <span class="more-authors" title="click to view 5 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '5 more authors' ? 'Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, Illia Polosukhin' : '5 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">5 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In Advances in Neural Information Processing Systems 30: Annual Conference
+                  on Neural Information Processing Systems 2017, December 4-9, 2017,
+                  Long Beach, CA, USA</em>, 2017
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="linear-attention" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Transformers are RNNs: Fast Autoregressive Transformers with Linear
+                  Attention</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Angelos Katharopoulos,&nbsp;Apoorv Vyas,&nbsp;Nikolaos Pappas, and
+          <span class="more-authors" title="click to view 1 more author" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '1 more author' ? 'François Fleuret' : '1 more author';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">1 more author</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In Proceedings of the 37th International Conference on Machine Learning,
+                  ICML 2020, 13-18 July 2020, Virtual Event</em>, 2020
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
         <div id="hippo" class="col-sm-8">
         <!-- Title -->
         <div class="title">HiPPO: Recurrent Memory with Optimal Polynomial Projections</div>
@@ -1239,9 +2090,392 @@ Discrete SSM breaks down at Nyquist frequency (or sampling frequency).
           
         </div>
       </div>
-</li></ol>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
 
-<h4 id="notes">Notes</h4>
+        <!-- Entry bib key -->
+        <div id="long_range_arena" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Long Range Arena : A Benchmark for Efficient Transformers</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Yi Tay,&nbsp;Mostafa Dehghani,&nbsp;Samira Abnar, and
+          <span class="more-authors" title="click to view 7 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '7 more authors' ? 'Yikang Shen, Dara Bahri, Philip Pham, Jinfeng Rao, Liu Yang, Sebastian Ruder, Donald Metzler' : '7 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">7 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In 9th International Conference on Learning Representations, ICLR 2021,
+                  Virtual Event, Austria, May 3-7, 2021</em>, 2021
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="dss" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Diagonal State Spaces are as Effective as Structured State Spaces</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Ankit Gupta,&nbsp;Albert Gu,&nbsp;and&nbsp;Jonathan Berant</div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In NeurIPS</em>, 2022
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="gated_attention_units" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Transformer Quality in Linear Time</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Weizhe Hua,&nbsp;Zihang Dai,&nbsp;Hanxiao Liu, and
+          <span class="more-authors" title="click to view 1 more author" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '1 more author' ? 'Quoc V. Le' : '1 more author';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">1 more author</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In International Conference on Machine Learning, ICML 2022, 17-23 July
+                  2022, Baltimore, Maryland, USA</em>, 2022
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="block_recurrent_transformers" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Block-Recurrent Transformers</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        DeLesley Hutchins,&nbsp;Imanol Schlag,&nbsp;Yuhuai Wu, and
+          <span class="more-authors" title="click to view 2 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '2 more authors' ? 'Ethan Dyer, Behnam Neyshabur' : '2 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">2 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In NeurIPS</em>, 2022
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="transformer_modifications" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">Do Transformer Modifications Transfer Across Implementations and Applications?</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Sharan Narang,&nbsp;Hyung Won Chung,&nbsp;Yi Tay, and
+          <span class="more-authors" title="click to view 13 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '13 more authors' ? 'Liam Fedus, Thibault Févry, Michael Matena, Karishma Malkan, Noah Fiedel, Noam Shazeer, Zhenzhong Lan, Yanqi Zhou, Wei Li, Nan Ding, Jake Marcus, Adam Roberts, Colin Raffel' : '13 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">13 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In Proceedings of the 2021 Conference on Empirical Methods in Natural
+                  Language Processing, EMNLP 2021, Virtual Event / Punta Cana, Dominican
+                  Republic, 7-11 November, 2021</em>, 2021
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-doi="10.18653/V1/2021.EMNLP-MAIN.465" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-doi="10.18653/V1/2021.EMNLP-MAIN.465" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="glam" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">GLaM: Efficient Scaling of Language Models with Mixture-of-Experts</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Nan Du,&nbsp;Yanping Huang,&nbsp;Andrew M. Dai, and
+          <span class="more-authors" title="click to view 24 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '24 more authors' ? 'Simon Tong, Dmitry Lepikhin, Yuanzhong Xu, Maxim Krikun, Yanqi Zhou, Adams Wei Yu, Orhan Firat, Barret Zoph, Liam Fedus, Maarten P. Bosma, Zongwei Zhou, Tao Wang, Yu Emma Wang, Kellie Webster, Marie Pellat, Kevin Robinson, Kathleen S. Meier-Hellstern, Toju Duke, Lucas Dixon, Kun Zhang, Quoc V. Le, Yonghui Wu, Zhifeng Chen, Claire Cui' : '24 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">24 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>In International Conference on Machine Learning, ICML 2022, 17-23 July
+                  2022, Baltimore, Maryland, USA</em>, 2022
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="lamda" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">LaMDA: Language Models for Dialog Applications</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Romal Thoppilan,&nbsp;Daniel De Freitas,&nbsp;Jamie Hall, and
+          <span class="more-authors" title="click to view 54 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '54 more authors' ? 'Noam Shazeer, Apoorv Kulshreshtha, Heng-Tze Cheng, Alicia Jin, Taylor Bos, Leslie Baker, Yu Du, YaGuang Li, Hongrae Lee, Huaixiu Steven Zheng, Amin Ghafouri, Marcelo Menegali, Yanping Huang, Maxim Krikun, Dmitry Lepikhin, James Qin, Dehao Chen, Yuanzhong Xu, Zhifeng Chen, Adam Roberts, Maarten Bosma, Yanqi Zhou, Chung-Ching Chang, Igor Krivokon, Will Rusch, Marc Pickett, Kathleen S. Meier-Hellstern, Meredith Ringel Morris, Tulsee Doshi, Renelito Delos Santos, Toju Duke, Johnny Soraker, Ben Zevenbergen, Vinodkumar Prabhakaran, Mark Diaz, Ben Hutchinson, Kristen Olson, Alejandra Molina, Erin Hoffman-John, Josh Lee, Lora Aroyo, Ravi Rajakumar, Alena Butryna, Matthew Lamm, Viktoriya Kuzmina, Joe Fenton, Aaron Cohen, Rachel Bernstein, Ray Kurzweil, Blaise Agüera Arcas, Claire Cui, Marian Croak, Ed H. Chi, Quoc Le' : '54 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">54 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>CoRR</em>, 2022
+        </div>
+        <div class="periodical">
+          
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li>
+<li><!-- _layouts/bib.html -->
+      <div class="row">
+        <div class="col-sm-2 abbr"></div>
+
+        <!-- Entry bib key -->
+        <div id="tc_math" class="col-sm-8">
+        <!-- Title -->
+        <div class="title">A Mathematical Framework for Transformer Circuits</div>
+        <!-- Author -->
+        <div class="author">
+        
+
+        Nelson Elhage,&nbsp;Neel Nanda,&nbsp;Catherine Olsson, and
+          <span class="more-authors" title="click to view 22 more authors" onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == '22 more authors' ? 'Tom Henighan, Nicholas Joseph, Ben Mann, Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, Nova DasSarma, Dawn Drain, Deep Ganguli, Zac Hatfield-Dodds, Danny Hernandez, Andy Jones, Jackson Kernion, Liane Lovitt, Kamal Ndousse, Dario Amodei, Tom Brown, Jack Clark, Jared Kaplan, Sam McCandlish, Chris Olah' : '22 more authors';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.text(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '10');
+              ">22 more authors</span></div>
+
+        <!-- Journal/Book title and date -->
+        
+        
+        <div class="periodical">
+          <em>Transformer Circuits Thread</em>, 2021
+        </div>
+        <div class="periodical">
+          https://transformer-circuits.pub/2021/framework/index.html
+        </div>
+
+          <!-- Links/Buttons -->
+          <div class="links">
+          </div>
+          
+          <div class="badges">
+            <span class="altmetric-embed" data-altmetric-id="" data-hide-no-mentions="true" data-hide-less-than="15" data-badge-type="2" data-badge-popover="right"></span>
+            <span class="__dimensions_badge_embed__" data-pmid="" data-hide-zero-citations="true" data-style="small_rectangle" data-legend="hover-right" style="margin-bottom: 6px;"></span>
+          </div>
+
+          
+        </div>
+      </div>
+</li></ol>
 
 <!-- For more details, see [Wikipedia](https://en.wikipedia.org/wiki/Hilbert_space). -->
 
@@ -1257,113 +2491,209 @@ discuss the significance of completeness .. it might be a distraction
 in the Hilbert space, meaning that any element in such Hilbert space can be approximated arbitrarily close by a linear combination of the basis elements. The notion of a Schauder basis makes sense given the completeness of such space (a Hilbert space is complete by definition) where completeness gaurantees that there are no ``holes`` in the space and a sequence that should converge actually converges (formally, any Cauchy sequence converges). The importance of being countable is that we can represent the basis elements as a sequence, rather than an continuous integral.
 -->
 
+<hr />
+<h1 id="appendix">Appendix</h1>
+
 <!--
-# Post Appendix -- Temporary Scratchpad
+Literature depedence diagram
 
+GLU (2016) -> SwiGLU
 
-The Hippo matrix is quite special in that we consider the case where the measure is uniform -- that is, the weight of the integral anywhere within the interval does not change. There are cases where this is not true, for example, if we operate in the case where the measure has exponential decay. This would give rise to a different set of orthonormal basis functions, such as the Laguerre polynomials. However, the authors argue that for long range modeling, the uniform measure is more appropriate. For more details, see [...].
+gMLP -> GAU -> GSS 
 
-
-$$
-\begin{align*}
-c_0 &= a_0 b_0 \\
-c_1 &= a_0 b_1 + a_1 b_0 \\
-c_2 &= a_0 b_2 + a_1 b_1 + a_2 b_0 \\
-&\vdots \\
-c_{N-1} &= a_0 b_{N-1} + a_1 b_{N-2} + \dots + a_{N-1} b_0 \\
-c_N &=  a_2 b_{N-2} + \dots + a_{N-1} b_1 \\
-c_{N+1} &= a_2 b_{N-1} + \dots + a_{N-1} b_2 \\
-&\vdots \\
-\end{align*}
-$$
-
-
-
-or equivalently:
-
-$$
-\mathbf{c} = 
-\begin{bmatrix}
-c_0 \\
-c_1 \\
-c_2 \\
-c_3 \\
-c_4 \\
-c_5 \\
-c_6 \\
-\end{bmatrix}
-=
-\begin{bmatrix}
-b_0 & 0 & 0 & 0 \\
-b_1 & b_0 & 0 & 0 \\
-b_2 & b_1 & b_0 & 0 \\
-b_3 & b_2 & b_1 & b_0 \\
-0 & b_3 & b_2 & b_1 \\
-0 & 0 & b_3 & b_2 \\
-0 & 0 & 0 & b_3 \\
-\end{bmatrix}
-\begin{bmatrix}
-a_0 \\
-a_1 \\
-a_2 \\
-a_3 \\
-\end{bmatrix}
-$$
-
-
-from LaTeX It
-
-\begin{pmatrix}
-y_0 \\
-y_1 \\
-y_2 \\
-y_3 \\
-\vdots \\
-y_{L-1} 
-\end{pmatrix} 
-=
-% S_h \mathbf{h}
-%S_h = 
-\begin{pmatrix}
-h_0 & 0   & 0   & 0  & \cdots & 0 \\
-h_1 & h_0 & 0   & 0  & \cdots & 0 \\
-h_2 & h_1 & h_0 & 0  & \cdots & 0\\
-h_3 & h_2 & h_1 & h_0 & \cdots & 0 \\
-\vdots & \vdots & \vdots & \vdots & \cdots & \vdots\\
-h_{L-1} & h_{L-2} & h_{L-3} & h{L-4} & \cdots & h_0 
-\end{pmatrix}
-\begin{pmatrix}
-u_0 \\
-u_1 \\
-u_2 \\
-u_3 \\
-\vdots \\
-u_{L-1} 
-\end{pmatrix} 
-
+DSS -> GSS -> H3 -> Hyena
 -->
+
+<h2 id="gating">Gating</h2>
+
+<p>The role of gating has been used extensively in deep learning literature.</p>
+
+<h3 id="gated-linear-units">Gated Linear Units</h3>
+
+<p><a class="citation" href="#gated_linear_units">(Dauphin et al., 2017)</a> introduced gated linear units, which processes the layer input \(X\) by projections into \(X  W + b\), modulated by element-wise multiplication with the input-dependent gates \(\sigma(X  V + c)\), where \(\sigma\) denotes the sigmoid function. That is,</p>
+
+<!-- where they are first used after short convolution along spatial dimension. -->
+
+\[\begin{align*}
+h(X) = (X  W + b) \odot \sigma(X  V + c)
+\end{align*}\]
+
+<p>Gated linear units can be seen as a multiplicative version of residual connection. That is, the gradient of the gated linear unit has a path \(\nabla X \odot \sigma(X)\) without coupling with the non linearity \(\sigma'(X)\), which can be arbitrarily low in some region of \(X\) and could potentially suppress the gradient.</p>
+
+\[\nabla [ X \odot \sigma(X)] = \nabla X \odot \sigma(X) + X \odot \sigma'(X) \odot \nabla X\]
+
+<p>Based on experiments in <a class="citation" href="#gated_linear_units">(Dauphin et al., 2017)</a>, gated linear units as activation functions have shown improvement over other activations such as ReLU, Tanh, or the Tanh-gating mechanism used in LSTM <a class="citation" href="#lstm">(Hochreiter &amp; Schmidhuber, 1997; van den Oord et al., 2016)</a>.</p>
+
+<h3 id="glu-variants">GLU Variants</h3>
+
+<p><a class="citation" href="#swiglu">(Shazeer, 2020)</a> shows that variants of GLU are quite effective for transformers such as SwiGLU when used in place of ReLU or GELU between the two linear projections in feedforward layers. SwiGLU is adopted is large scale models such as PaLM <a class="citation" href="#palm">(Chowdhery et al., 2023)</a>.</p>
+
+<!-- 
+normal GLU seems to be adopted in glam and lambda as well
+-->
+
+<h3 id="gmlp">gMLP</h3>
+
+<p><a class="citation" href="#gmlp">(Liu et al., 2021)</a> proposes gMLP for vision tasks, which uses a gating mechanism similar to GLU, but with a different formulation. gMLP enables cross-token interactions via a linear projection \(f(Z) = W Z + b\) coupled with gating as</p>
+
+\[s(Z) = Z \odot f(Z)\]
+
+<p>where \(W \in \mathbb{R}^{L \times L}\) controls cross token interactions.The author finds that it is also effective to split \(Z\) into two parts \(Z_1, Z_2\) along the channel dimension and instead uses</p>
+
+\[s(Z) = Z_1 \odot f(Z_2)\]
+
+<p>The comparisons shown in <a class="citation" href="#gmlp">(Liu et al., 2021)</a>  indicate that attention is not critical for vision tasks, and the degradation in some NLP tasks can be compensated by making gMLP larger. This is an interesting experiment that attention may not be necessary and can be compensated via this form of gating and scale.</p>
+
+<h3 id="gated-attention-units">Gated Attention Units</h3>
+
+<!--
+GLU has been used in state-of-the-art transformer models <a class="citation" href="#glam">(Du et al., 2022; Thoppilan et al., 2022)</a> where the output of the attention is expressed as 
+
+$$
+U = \phi_u(X W_u), V = \phi_v(X W_v), \quad \in \mathbb{R}^{L \times E} \\
+O = (U \odot V) W_o , \quad \in \mathbb{R}^{L \times D}
+$$
+
+That is, $$U$$ is gated by $$V$$ corresponding to the same token.
+-->
+<p>Gated attention units <a class="citation" href="#gated_attention_units">(Hua et al., 2022)</a> can be described as</p>
+
+\[O = (U \odot \hat{V}) W_o , \quad \text{ where } \hat{V} = A V \text{ and }
+U = \phi_u(X W_u), V = \phi_v(X W_v), \quad \in \mathbb{R}^{L \times E}\]
+
+<p>where \(A \in \mathbb{R}^{L \times L}\), which describes token-token attention weights. This formulation allows contextualized gating via \(\hat{V}\) instead of gating by the same token \(V\) as in MLP.</p>
+
+<p>The paper uses the \(A\) matrix as the query-key attention matrix</p>
+
+\[A = \text{ReLU}^2(Q(Z) K(Z)^T) ; Z = \phi_z (X W_z)\]
+
+<p>The paper uses two GAU layers as a replacement for MLP (or GLU) + multi-head attention, with \(e = 2d\) where \(d\) is the hidden dimension resulting in comparable number of parameters in both scenarios. The paper finds that, consistent with <a class="citation" href="#gmlp">(Liu et al., 2021)</a>, gating allows a simpler or weaker attention mechanism without quality degradation and also incorporates linear attention, where in linear attention, \(\hat{V}\) uses \(\sum K V\) first, rather than \(\sum QK\) first.</p>
+
+<h2 id="more-on-fourier">More on Fourier</h2>
+
+<!--
+- Illustrate the Fourier transform
+- Show in both continuous (uncountable basis) and also the countable Fourier basis
+- Show in the discrete case as well
+-->
+
+<p>As illustrated in <a href="#example-2-fourier-basis-for-periodic-functions">Fourier Basis</a>, any periodic function can be written as a linear combination of sine and cosine, or more compactly, as a linear combination of complex exponentials.</p>
+
+<p>However, a general function that is <strong>not</strong> peroidic can also be expressed in terms of the continuous-spectrum Fourier Transform. That is, the frequency component needs not be multiples of a base frequency (harmonics), but can be an entire continuous spectrum.</p>
+
+<p>The Fourier transform \(\mathcal{F}\) of a function \(f\) is defined as:</p>
+
+\[\begin{align*}
+\mathcal{F}[f](\omega) &amp;= \int_{-\infty}^{\infty} f(t) e^{-i \omega t} dt \\
+&amp;= \int_{-\infty}^{\infty} f(t) \cos(\omega t) dt - i \int_{-\infty}^{\infty} f(t) \sin(\omega t) dt
+\end{align*}\]
+
+<p>where \(\omega\) is the frequency. Note that the complex notation allows us to extract components of both sine and cosine at once. If the Fourier transform is real, then frequency belongs to the cosine wave, and if it is pure imaginary, then the frequency belongs to the sine wave. A general complex number indicates the phase of the frequency component.</p>
+
+<h4 id="example-fourier-transform-of-a-sine-wave">Example: Fourier Transform of a Sine Wave</h4>
+<p>Let’s look at a simple example where \(f\) is a sine wave with frequency \(\omega_0\):</p>
+
+\[\begin{align*}
+f(t) &amp;= \sin(\omega_0 t)
+\end{align*}\]
+
+<p>Then,</p>
+
+\[\begin{align*}
+\mathcal{F}[f](\omega) &amp;= \int_{-\infty}^{\infty} \sin(\omega_0 t) e^{-i \omega t} dt \\
+&amp;= \int_{-\infty}^{\infty} \frac{e^{i \omega_0 t} - e^{-i \omega_0 t}}{2i} e^{-i \omega t} dt \\
+&amp;= \frac{1}{2i} \int_{-\infty}^{\infty} e^{i (\omega_0 - \omega) t} dt - \frac{1}{2i} \int_{-\infty}^{\infty} e^{i (\omega_0 + \omega) t} dt \\
+&amp;= \frac{1}{2i} \left[ \delta(\omega - \omega_0) - \delta(\omega + \omega_0) \right]
+\end{align*}\]
+
+<p>where \(\delta\) is the Dirac delta function. We can see that the Fourier transform of a sine wave is a linear combination of two Dirac delta functions at \(\omega_0\) and \(-\omega_0\). The pure imaginary frequecy means that the frequency belongs to the sine wave (phase zero). We can see that in this case, the Fourier transform yields the same results as Fourier series representation – that is, we only need one frequency to represent a sine wave.</p>
+
+<h4 id="example-fourier-transform-of-a-truncated-sine-wave">Example: Fourier Transform of a Truncated Sine Wave</h4>
+
+<p>Another example is where \(f\) is a truncated sine wave. That is, \(f\) is a sine wave for \(-T \leq t \leq T\) and zero otherwise. Then,</p>
+
+\[\begin{align*}
+\mathcal{F}[f](\omega) &amp;= \int_{-T}^{T} \sin(\omega_0 t) e^{-i \omega t} dt \\
+&amp;= \int_{-T}^{T} \frac{e^{i \omega_0 t} - e^{-i \omega_0 t}}{2i} e^{-i \omega t} dt \\
+&amp;= \frac{1}{2i} \int_{-T}^{T} e^{i (\omega_0 - \omega) t} dt - \frac{1}{2i} \int_{-T}^{T} e^{i (\omega_0 + \omega) t} dt \\
+&amp;= \frac{1}{2i} \left[ \frac{e^{i (\omega_0 - \omega) T} - e^{-i (\omega_0 - \omega) T}}{i (\omega_0 - \omega)} - \frac{e^{i (\omega_0 + \omega) T} - e^{-i (\omega_0 + \omega) T}}{i (\omega_0 + \omega)} \right] \\
+&amp;= \frac{1}{2} \left[ \frac{e^{i (\omega_0 - \omega) T} - e^{-i (\omega_0 - \omega) T}}{(\omega_0 - \omega)} - \frac{e^{i (\omega_0 + \omega) T} - e^{-i (\omega_0 + \omega) T}}{(\omega_0 + \omega)} \right] \\
+&amp;= \frac{1}{2} \left[ \frac{\sin((\omega_0 - \omega) T)}{(\omega_0 - \omega)} - \frac{\sin((\omega_0 + \omega) T)}{(\omega_0 + \omega)} \right]
+\end{align*}\]
+
+<p>Here, due to truncatation, the function is no longer periodic and results in frequency components that spread across the spectrum. However, we can see that they are concentrated at \(\pm \omega_0\) and dissipates as \(\vert \omega \pm \omega_0 \vert\) gets larger.</p>
+
+<h4 id="example-fourier-transform-of-a-box-function">Example: Fourier Transform of a Box Function</h4>
+
+<p>Let’s look at an example of the Fourier transform of a box function:</p>
+
+\[\begin{align*}
+f(t) &amp;=
+\begin{cases}
+1 &amp; |t| &lt; L \\
+0 &amp; \text{otherwise}
+\end{cases}
+\end{align*}\]
+
+<p>It can be shown that the Fourier transform of \(f\) is:</p>
+
+\[\begin{align*}
+\mathcal{F}[f](\omega) &amp;= 2L \frac{\sin(\omega L)}{\omega L} = 2L \ \text{sinc} (\omega L)
+\end{align*}\]
+
+<p>A high level interpretation of this Fourier transform is that a box function has frequency components even at infinitely high frequencies. However, the contribution of such high frequencies get small as \(\vert \omega \vert\) gets larger, since the range of \(\sin\) is bounded and \(\frac{1}{\omega}\) term gets smaller.</p>
+
+<h4 id="fun-facts">Fun Facts</h4>
+<p>The Fourier Transform is well-defined for any absolutely integrable function, which includes probability densities. Another name used for Fourier transform of a probability density is a characteristic function, defined as \(\mathbb{E}_Y e^{iyt}\). In fact there is a one-to-one correspondence between a probability density and its Fourier transform. This characteristic function is often much easier to deal with than the density function itself; for example, one can easily prove the Central Limit Theorem using characteristic functions by showing that the characteristic functions of \(\frac{1}{\sqrt{N}} \sum Y_i\) converges to the characteristic function of a Gaussian distribution, which implies that \(\frac{1}{\sqrt{N}} \sum Y_i\) converges to a Gaussian in distribution.</p>
+
+<hr />
+
+<h2 id="footnote">Footnote</h2>
+<!-- nothing after this line -->
+
 <div class="footnotes" role="doc-endnotes">
   <ol>
+    <li id="fn:single_input_single_output" role="doc-endnote">
+      <p>We will focus on the single input and single output case for simplicity. <a href="#fnref:single_input_single_output" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:vector-sizes" role="doc-endnote">
+      <p>In general, the vectors can have different sizes, but for simplicity, we will assume that they have the same size. <a href="#fnref:vector-sizes" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
     <li id="fn:toeplitz" role="doc-endnote">
       <p>See <a href="https://en.wikipedia.org/wiki/Toeplitz_matrix">Wikipedia - Toeplitz matrix</a> for more details on Toeplitz matrix. <a href="#fnref:toeplitz" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:relatively-zero" role="doc-endnote">
+      <p>In general, we only need a Dirac delta function to be relatively zero everywhere except at \(t=0\). This is the case for \(\lim_{L\to \infty} f_L(x) = L \ \text{sinc}(xL)\) which is not exactly zero outside of \(x=0\) but is relatively zero compared to at \(x = 0\). <a href="#fnref:relatively-zero" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
     <li id="fn:hilbert-space" role="doc-endnote">
       <p>A Hilbert space \(\mathcal{H}\) is a vector space equipped with an inner product \(\langle \cdot, \cdot \rangle\) that is complete with respect to the norm induced by the inner product \(\lVert \cdot  \rVert = \sqrt{ \langle \cdot, \cdot \rangle }\). Completeness means that any Cauchy sequence in \(\mathcal{H}\) converges to an element in within \(\mathcal{H}\) itself. The convergence is with respect to the norm, which provides a notion of distance. To elaborate on completeness further, a Cauchy sequence is a sequence such that elements \(v_n, v_m\) are getting closer and closer together as \(n,m \to \infty\). Intuitively, a complete space means that there are no unexpected “holes” in the space where any sequence that is supposed to converge (a Cauchy sequence) actually converges inside the space itself. <a href="#fnref:hilbert-space" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
     <li id="fn:schauder-basis" role="doc-endnote">
-      <p>A Schauder basis is a <em>countable</em> basis that is dense in a complete normed space (a Banach space). To say that a basis is ‘dense’ means that any element of the space can be arbitrarily closely approximated by a finite linear combination of basis elements. In other words, for every element in the space and any given small positive distance (\(\epsilon\)), there exists a finite sum of basis elements that is within that distance of the given element. This ensures that the basis “spans” the entire space in a limiting sense, even if any specific finite subset of the basis does not span the space. <br /> <br /> A crucial distinction to note is that a Schauder basis doesn’t need to be mutually orthogonal. This is because it’s typically defined in the context of a Banach space, where angles or orthogonality might not be relevant concepts. Yet, in a Hilbert space, it’s entirely possible to orthogonalize a Schauder basis using the Gram-Schmidt process. <a href="#fnref:schauder-basis" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+      <p>A Schauder basis is a <em>countable</em> basis that is dense in a complete normed space (a Banach space). To say that a basis is <em>dense</em> means that any element of the space can be arbitrarily closely approximated by a finite linear combination of basis elements. In other words, for every element in the space and any given small positive distance (\(\epsilon\)), there exists a finite sum of basis elements that is within that distance of the given element. This ensures that the basis “spans” the entire space in a limiting sense, even if any specific finite subset of the basis does not span the space. <br /> <br /> A crucial distinction to note is that a Schauder basis doesn’t need to be mutually orthogonal. This is because it’s typically defined in the context of a Banach space, where angles or orthogonality might not be relevant concepts. Yet, in a Hilbert space, it’s entirely possible to orthogonalize a Schauder basis using the Gram-Schmidt process. <a href="#fnref:schauder-basis" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
     <li id="fn:measure-theoretic-innerproduct" role="doc-endnote">
       <p>The measure theoretic way is to define the inner product as \(\langle f, g \rangle = \int f(x)^* g(x) d\mu\) where \(\mu\) is the measure. In the case of \(L^2[a,b]\), the measure is \(d\mu = w(x) dx\) where \(w(x)\) is the weight function and is zero outside the interval \([a,b]\). <a href="#fnref:measure-theoretic-innerproduct" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
+    <li id="fn:isomorphism" role="doc-endnote">
+      <p>It turns out that such representation is also unique, which implies the an isomorphism between the space of continous functions and the space of sequences of numbers. More precisely, \(L^2[a,b]\) with a Schauder basis is isomorphic to \(\ell^2\), the space of square summable sequences. It is quite profound that we can uniquely represent a function that takes values on uncountably many points with a sequence of numbers, which is an countable set! The special structure of the orthonormal basis allows this to happen. <a href="#fnref:isomorphism" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
     <li id="fn:convergence-in-norm" role="doc-endnote">
-      <p>The convergence here is in the norm defined by the inner product of the Hilbert space. <a href="#fnref:convergence-in-norm" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+      <p>The convergence here is in the norm defined by the inner product of the Hilbert space. The proof for convergence is out of scope for this post. <a href="#fnref:convergence-in-norm" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
     <li id="fn:periodic" role="doc-endnote">
       <p>\(f\) is periodic in the interval \([-L,L]\) if \(f(-L) = f(L)\). In practice, any function can be made to be periodic via padding. For instance, if a function is defined over \([-L, L]\), then we can pad with zeros from \(-L-1\) to \(-L\) and also from \(L\) to \(L+1\). This would result a function that is periodic over \([-L-1, L+1]\). <a href="#fnref:periodic" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
+    <li id="fn:attention_full" role="doc-endnote">
+      <p>In the original linear attention paper, the author keeps the softmax denominator. However, we can view it as an identity function with respect to the length dimension \(m\) since the denominator involve \(\sum_m \exp(A_{hmn}) = D_{hn}\), which is independent of \(m\) and still allows the reodering of the summation \(\sum_m\) and \(\sum_k\). <a href="#fnref:attention_full" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:function-vs-sequence" role="doc-endnote">
+      <p>In the case of state space models, we often think of \(u(t)\) as a function even though in the discretized version, it is a sequence. This is because we can think of \(u(t)\) as a function that is sampled at discrete time points. In other words, \(u(t)\) is a function that is defined for all \(t\), but we only observe it at discrete time points. <a href="#fnref:function-vs-sequence" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:implicit-convolution" role="doc-endnote">
+      <p>In general, an implicit convolution means that given an input \(x\), the convolution filter \(h_\theta(x)\) depends on \(x\) and also potentially some parameters \(\theta\). In the case of Hyena, the dependence on the data is not as strong – any input of the same length yields the same position embeddings, hence the same convolution kernels. <a href="#fnref:implicit-convolution" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
   </ol>
-</div>]]></content><author><name>Ben Athiwaratkun</name></author><category term="operators" /><category term="convolution" /><category term="s4" /><category term="h3" /><category term="gss" /><category term="hyena" /><summary type="html"><![CDATA[There are recent exciting developments of AI models for sub-quadratic long context modeling involving the use of convolutions, ranging from Structured State Space Models (S4) (Gu et al., 2022) (Gupta et al., 2022), Gated State Spaces (GSS) (Mehta et al., 2023), H3 (Fu et al., 2023), and most recently, Hyena model (Poli et al., 2023). In this blog, we will seek to develop intuition behind these models with some illustrations.]]></summary></entry><entry><title type="html">Lossless Tokenizer via Byte-level BPE with Tiktoken</title><link href="https://benathi.github.io/blogs/2023-09/llm-tokenizer/" rel="alternate" type="text/html" title="Lossless Tokenizer via Byte-level BPE with Tiktoken" /><published>2023-09-30T00:00:00-04:00</published><updated>2023-09-30T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-09/llm-tokenizer</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-09/llm-tokenizer/"><![CDATA[<p>OpenAI’s gpt2 tokenizer is among the first that handles tokenization in a completely lossless way, meaning that there is no unknown token. In my opinion, OpenAI’s vision for generality of GPT really shines through from the tokenizer aspect. In this blog we will be analyzing <code class="language-plaintext highlighter-rouge">tiktoken</code> which is the tokenizer behind GPT models. 
+</div>]]></content><author><name>Ben Athiwaratkun</name></author><category term="operators" /><category term="convolution" /><category term="s4" /><category term="h3" /><category term="gss" /><category term="hyena" /><category term="long-range-modeling" /><summary type="html"><![CDATA[There are recent exciting developments of AI models for sub-quadratic long context modeling involving the use of global convolutions, ranging from Structured State Space Models (S4) (Gu et al., 2022) (Gu et al., 2022), Gated State Spaces (GSS) (Mehta et al., 2023), H3 (Fu et al., 2023), and most recently, Hyena models (Poli et al., 2023; Nguyen et al., 2023). In this blog post, we will attempt to provide a unified perspective on these models and show how they are related to each other. We will also provide a background on necessary topics, including convolution, fast fourier transform, state space models, and attention.]]></summary></entry><entry><title type="html">Lossless Tokenizer via Byte-level BPE with Tiktoken</title><link href="https://benathi.github.io/blogs/2023-09/llm-tokenizer/" rel="alternate" type="text/html" title="Lossless Tokenizer via Byte-level BPE with Tiktoken" /><published>2023-09-30T00:00:00-04:00</published><updated>2023-09-30T00:00:00-04:00</updated><id>https://benathi.github.io/blogs/2023-09/llm-tokenizer</id><content type="html" xml:base="https://benathi.github.io/blogs/2023-09/llm-tokenizer/"><![CDATA[<p>OpenAI’s gpt2 tokenizer is among the first that handles tokenization in a completely lossless way, meaning that there is no unknown token. In my opinion, OpenAI’s vision for generality of GPT really shines through from the tokenizer aspect. In this blog we will be analyzing <code class="language-plaintext highlighter-rouge">tiktoken</code> which is the tokenizer behind GPT models. 
 <!-- Towards the end of the blog, we will compare different publicly available tokenizers in terms of losslessness, compression rate, etc. --></p>
 
 <!-- ### Encoding Text To Tokens -->
